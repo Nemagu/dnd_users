@@ -8,9 +8,26 @@ const (
 
 type UserState uint
 
-func NewUserState(state uint) (UserState, error) {
-	if state > 2 {
-		return UserState(0), &DomainError{Message: "переданного статуса не существует"}
-	}
-	return UserState(state), nil
+func NewActiveUserState() UserState {
+	return UserState(ACTIVE)
+}
+
+func NewPendingUserState() UserState {
+	return UserState(PENDING)
+}
+
+func NewRemovedUserState() UserState {
+	return UserState(REMOVED)
+}
+
+func (us UserState) IsActive() bool {
+	return us == ACTIVE
+}
+
+func (us UserState) IsPending() bool {
+	return us == PENDING
+}
+
+func (us UserState) IsRemoved() bool {
+	return us == REMOVED
 }

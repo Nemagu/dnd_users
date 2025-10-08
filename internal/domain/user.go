@@ -49,3 +49,19 @@ func (u *User) PasswordHash() PasswordHash {
 func (u *User) Person() Person {
 	return u.person
 }
+
+func (u *User) ChangePassword(passwordHash PasswordHash) error {
+	if err := u.assertIsNotActive(); err != nil {
+		return err
+	}
+	u.passwordHash = passwordHash
+	return nil
+}
+
+func (u *User) assertIsNotActive() error {
+	var err error
+	if !u.state.IsActive() {
+		err = &DomainError{Message: "Пользователь не является активным"}
+	}
+	return err
+}
