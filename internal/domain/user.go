@@ -74,6 +74,22 @@ func (u *User) ChangeEmail(email Email) error {
 	return nil
 }
 
+func (u *User) ChangeUsername(username Username) error {
+	if err := u.assertIsNotActive(); err != nil {
+		return err
+	}
+	u.username = username
+	return nil
+}
+
+func (u *User) ChangePerson(person Person) error {
+	if err := u.assertIsNotActive(); err != nil {
+		return err
+	}
+	u.person = person
+	return nil
+}
+
 func (u *User) AppointAdmin() error {
 	if err := u.assertIsNotActive(); err != nil {
 		return err
@@ -109,14 +125,6 @@ func (u *User) Freeze() error {
 		return &DomainError{Message: "пользователь уже заморожен"}
 	}
 	u.state = NewFrozenUserState()
-	return nil
-}
-
-func (u *User) Pend() error {
-	if u.state.IsPending() {
-		return &DomainError{Message: "пользователь уже ожидает"}
-	}
-	u.state = NewPendingUserState()
 	return nil
 }
 

@@ -9,8 +9,8 @@ type UsersQuery struct {
 	repository application.UserRepository
 }
 
-func NewUsersQuery(repository application.UserRepository) UsersQuery {
-	return UsersQuery{repository: repository}
+func NewUsersQuery(repository application.UserRepository) *UsersQuery {
+	return &UsersQuery{repository: repository}
 }
 
 func (q *UsersQuery) Execute(initiatorID domain.UserID) ([]*domain.User, error) {
