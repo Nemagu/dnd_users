@@ -5,6 +5,7 @@ type User struct {
 	username     Username
 	email        Email
 	state        UserState
+	status       UserStatus
 	passwordHash PasswordHash
 	person       Person
 }
@@ -14,6 +15,7 @@ func NewUser(
 	username Username,
 	email Email,
 	state UserState,
+	status UserStatus,
 	passwordHash PasswordHash,
 	person Person,
 ) (User, error) {
@@ -21,6 +23,8 @@ func NewUser(
 		userID:       userID,
 		username:     username,
 		email:        email,
+		state:        state,
+		status:       status,
 		passwordHash: passwordHash,
 		person:       person,
 	}, nil
@@ -42,6 +46,10 @@ func (u *User) State() UserState {
 	return u.state
 }
 
+func (u *User) Status() UserStatus {
+	return u.status
+}
+
 func (u *User) PasswordHash() PasswordHash {
 	return u.passwordHash
 }
@@ -58,10 +66,72 @@ func (u *User) ChangePassword(passwordHash PasswordHash) error {
 	return nil
 }
 
+func (u *User) ChangeEmail(email Email) error {
+	if err := u.assertIsNotActive(); err != nil {
+		return err
+	}
+	u.email = email
+	return nil
+}
+
+func (u *User) AppointAdmin() error {
+	if err := u.assertIsNotActive(); err != nil {
+		return err
+	}
+	if u.status.IsAdmin() {
+		return &DomainError{Message: "пользователь уже является администратором"}
+	}
+	u.status = NewAdminUserStatus()
+	return nil
+}
+
+func (u *User) AppointOrdinary() error {
+	if err := u.assertIsNotActive(); err != nil {
+		return err
+	}
+	if u.status.IsOrdinary() {
+		return &DomainError{Message: "пользователь уже является обычным"}
+	}
+	u.status = NewAdminUserStatus()
+	return nil
+}
+
+func (u *User) Activate() error {
+	if u.state.IsActive() {
+		return &DomainError{Message: "пользователь уже активен"}
+	}
+	u.state = NewActiveUserState()
+	return nil
+}
+
+func (u *User) Freeze() error {
+	if u.state.IsFrozen() {
+		return &DomainError{Message: "пользователь уже заморожен"}
+	}
+	u.state = NewFrozenUserState()
+	return nil
+}
+
+func (u *User) Pend() error {
+	if u.state.IsPending() {
+		return &DomainError{Message: "пользователь уже ожидает"}
+	}
+	u.state = NewPendingUserState()
+	return nil
+}
+
+func (u *User) Delete() error {
+	if u.state.IsDeleted() {
+		return &DomainError{Message: "пользователь уже удален"}
+	}
+	u.state = NewDeletedUserState()
+	return nil
+}
+
 func (u *User) assertIsNotActive() error {
 	var err error
 	if !u.state.IsActive() {
-		err = &DomainError{Message: "Пользователь не является активным"}
+		err = &DomainError{Message: "пользователь не является активным"}
 	}
 	return err
 }
