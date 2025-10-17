@@ -9,6 +9,6 @@ func NewUsername(username string) (Username, error) {
 	return Username{username: username}, nil
 }
 
-func (un Username) Username() string {
+func (un Username) String() string {
 	return un.username
 }

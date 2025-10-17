@@ -23,7 +23,7 @@ func (us UserStatus) IsOrdinary() bool {
 	return us == ORDINARY
 }
 
-func (us UserStatus) Status() string {
+func (us UserStatus) String() string {
 	switch us {
 	case ADMIN:
 		return "admin"

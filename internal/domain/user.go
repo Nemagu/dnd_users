@@ -1,5 +1,7 @@
 package domain
 
+import "fmt"
+
 type User struct {
 	userID       UserID
 	username     Username
@@ -142,4 +144,8 @@ func (u *User) assertIsNotActive() error {
 		err = &DomainError{Message: "пользователь не является активным"}
 	}
 	return err
+}
+
+func (u *User) String() string {
+	return fmt.Sprintf("id: %s\nusername: %s\nemail: %s", u.userID, u.username, u.email)
 }

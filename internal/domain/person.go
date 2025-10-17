@@ -1,5 +1,7 @@
 package domain
 
+import "fmt"
+
 type Person struct {
 	firstName string
 	lastName  string
@@ -15,4 +17,8 @@ func (p Person) FirstName() string {
 
 func (p Person) LastName() string {
 	return p.lastName
+}
+
+func (p Person) String() string {
+	return fmt.Sprintf("Имя: %s\nФамилия: %s", p.firstName, p.lastName)
 }

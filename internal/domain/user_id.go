@@ -13,3 +13,7 @@ func NewUserID(id uuid.UUID) (UserID, error) {
 func (ui UserID) ID() uuid.UUID {
 	return ui.id
 }
+
+func (ui UserID) String() string {
+	return ui.id.String()
+}

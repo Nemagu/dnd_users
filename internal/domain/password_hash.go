@@ -8,6 +8,6 @@ func NewPasswordHash(passwordHash string) (PasswordHash, error) {
 	return PasswordHash{passwordHash: passwordHash}, nil
 }
 
-func (ph PasswordHash) PasswordHash() string {
+func (ph PasswordHash) String() string {
 	return ph.passwordHash
 }

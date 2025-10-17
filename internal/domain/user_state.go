@@ -32,7 +32,7 @@ func (us UserState) IsDeleted() bool {
 	return us == DELETED
 }
 
-func (us UserState) State() string {
+func (us UserState) String() string {
 	switch us {
 	case ACTIVE:
 		return "active"
