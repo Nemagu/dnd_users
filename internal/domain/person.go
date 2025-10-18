@@ -20,5 +20,5 @@ func (p Person) LastName() string {
 }
 
 func (p Person) String() string {
-	return fmt.Sprintf("Имя: %s\nФамилия: %s", p.firstName, p.lastName)
+	return fmt.Sprintf("first name: %s\nlast name: %s", p.firstName, p.lastName)
 }

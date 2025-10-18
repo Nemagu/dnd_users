@@ -97,7 +97,7 @@ func (u *User) AppointAdmin() error {
 		return err
 	}
 	if u.status.IsAdmin() {
-		return &DomainError{Message: "пользователь уже является администратором"}
+		return IdempotentError("пользователь уже является администратором")
 	}
 	u.status = NewAdminUserStatus()
 	return nil
@@ -108,7 +108,7 @@ func (u *User) AppointOrdinary() error {
 		return err
 	}
 	if u.status.IsOrdinary() {
-		return &DomainError{Message: "пользователь уже является обычным"}
+		return IdempotentError("пользователь уже является обычным")
 	}
 	u.status = NewAdminUserStatus()
 	return nil
@@ -116,7 +116,7 @@ func (u *User) AppointOrdinary() error {
 
 func (u *User) Activate() error {
 	if u.state.IsActive() {
-		return &DomainError{Message: "пользователь уже активен"}
+		return IdempotentError("пользователь уже активен")
 	}
 	u.state = NewActiveUserState()
 	return nil
@@ -124,7 +124,7 @@ func (u *User) Activate() error {
 
 func (u *User) Freeze() error {
 	if u.state.IsFrozen() {
-		return &DomainError{Message: "пользователь уже заморожен"}
+		return IdempotentError("пользователь уже заморожен")
 	}
 	u.state = NewFrozenUserState()
 	return nil
@@ -132,7 +132,7 @@ func (u *User) Freeze() error {
 
 func (u *User) Delete() error {
 	if u.state.IsDeleted() {
-		return &DomainError{Message: "пользователь уже удален"}
+		return IdempotentError("пользователь уже удален")
 	}
 	u.state = NewDeletedUserState()
 	return nil
@@ -141,7 +141,7 @@ func (u *User) Delete() error {
 func (u *User) assertIsNotActive() error {
 	var err error
 	if !u.state.IsActive() {
-		err = &DomainError{Message: "пользователь не является активным"}
+		err = PolicyError("пользователь не является активным")
 	}
 	return err
 }
