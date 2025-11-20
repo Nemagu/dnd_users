@@ -1,5 +1,7 @@
 package domain
 
+import "fmt"
+
 type Email struct {
 	email string
 }
@@ -7,7 +9,7 @@ type Email struct {
 func NewEmail(email string) (Email, error) {
 	// TODO: add validation email
 	if len(email) < 5 {
-		return Email{}, &DomainError{Message: "email слишком короткий"}
+		return Email{}, fmt.Errorf("%w: email слишком короткий", ErrValidation)
 	}
 	return Email{email: email}, nil
 }
