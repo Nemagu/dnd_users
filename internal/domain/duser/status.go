@@ -12,35 +12,39 @@ const (
 	ORDINARY = "ordinary"
 )
 
-type UserStatus string
+type Status string
 
-func NewAdminStatus() UserStatus {
+func NewAdminStatus() Status {
 	return ADMIN
 }
 
-func NewOrdinaryStatus() UserStatus {
+func NewOrdinaryStatus() Status {
 	return ORDINARY
 }
 
-func StatusFromString(s string) (UserStatus, error) {
+func StatusFromString(s string) (Status, error) {
 	switch strings.ToLower(s) {
 	case ADMIN:
 		return ADMIN, nil
 	case ORDINARY:
 		return ORDINARY, nil
 	default:
-		return "", fmt.Errorf("%w: %s", domain.ErrInvalidData, s)
+		return "", fmt.Errorf(
+			"%w: статуса %s не существует",
+			domain.ErrInvalidData,
+			s,
+		)
 	}
 }
 
-func (us UserStatus) IsAdmin() bool {
-	return us == ADMIN
+func (s Status) IsAdmin() bool {
+	return s == ADMIN
 }
 
-func (us UserStatus) IsOrdinary() bool {
-	return us == ORDINARY
+func (s Status) IsOrdinary() bool {
+	return s == ORDINARY
 }
 
-func (us UserStatus) String() string {
-	return string(us)
+func (s Status) String() string {
+	return string(s)
 }

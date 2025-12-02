@@ -10,8 +10,8 @@ import (
 type User struct {
 	userID       uuid.UUID
 	email        domain.Email
-	state        UserState
-	status       UserStatus
+	state        State
+	status       Status
 	passwordHash string
 	version      uint64
 }
@@ -19,15 +19,13 @@ type User struct {
 func New(
 	userID uuid.UUID,
 	email domain.Email,
-	state UserState,
-	status UserStatus,
 	passwordHash string,
 ) (*User, error) {
 	return &User{
 		userID:       userID,
 		email:        email,
-		state:        state,
-		status:       status,
+		state:        NewActiveState(),
+		status:       NewOrdinaryStatus(),
 		passwordHash: passwordHash,
 		version:      0,
 	}, nil
@@ -36,11 +34,17 @@ func New(
 func Restore(
 	userID uuid.UUID,
 	email domain.Email,
-	state UserState,
-	status UserStatus,
+	state State,
+	status Status,
 	passwordHash string,
 	version uint64,
 ) (*User, error) {
+	if version < 1 {
+		return nil, fmt.Errorf(
+			"%w: при восстановлении пользователя версия не может быть меньше либо ровна 0",
+			domain.ErrInternal,
+		)
+	}
 	return &User{
 		userID:       userID,
 		email:        email,
@@ -59,11 +63,11 @@ func (u *User) Email() domain.Email {
 	return u.email
 }
 
-func (u *User) State() UserState {
+func (u *User) State() State {
 	return u.state
 }
 
-func (u *User) Status() UserStatus {
+func (u *User) Status() Status {
 	return u.status
 }
 
@@ -95,61 +99,28 @@ func (u *User) ChangeEmail(email domain.Email) error {
 	return nil
 }
 
-func (u *User) AppointAdmin() error {
+func (u *User) ChangeStatus(status Status) error {
 	if err := u.assertIsNotActive(); err != nil {
 		return err
 	}
-	if u.status.IsAdmin() {
+	if u.status == status {
 		return fmt.Errorf(
-			"%w: пользователь уже является администратором",
+			"%w: статус пользователя не изменяется",
 			domain.ErrIdempotent,
 		)
 	}
-	u.status = NewAdminStatus()
+	u.status = status
 	return nil
 }
 
-func (u *User) AppointOrdinary() error {
-	if err := u.assertIsNotActive(); err != nil {
-		return err
-	}
-	if u.status.IsOrdinary() {
+func (u *User) ChangeState(state State) error {
+	if u.state == state {
 		return fmt.Errorf(
-			"%w: пользователь уже является обычным",
+			"%w: состояние пользователя не изменяется",
 			domain.ErrIdempotent,
 		)
 	}
-	u.status = NewAdminStatus()
-	return nil
-}
-
-func (u *User) Activate() error {
-	if u.state.IsActive() {
-		return fmt.Errorf(
-			"%w: пользователь уже активен",
-			domain.ErrIdempotent,
-		)
-	}
-	u.state = NewActiveState()
-	return nil
-}
-
-func (u *User) Freeze() error {
-	if u.state.IsFrozen() {
-		return fmt.Errorf(
-			"%w: пользователь уже заморожен",
-			domain.ErrIdempotent,
-		)
-	}
-	u.state = NewFrozenState()
-	return nil
-}
-
-func (u *User) Delete() error {
-	if u.state.IsDeleted() {
-		return fmt.Errorf("%w: пользователь уже удален", domain.ErrIdempotent)
-	}
-	u.state = NewDeletedState()
+	u.state = state
 	return nil
 }
 

@@ -2,46 +2,62 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Nemagu/dnd/internal/application"
+	appdto "github.com/Nemagu/dnd/internal/application/dto"
+	"github.com/Nemagu/dnd/internal/application/repository"
 	"github.com/Nemagu/dnd/internal/application/service"
 	"github.com/Nemagu/dnd/internal/domain"
 )
 
 type ConfirmEmailUseCase struct {
-	emailCryptoService service.EmailCryptoService
-	emailProvider      service.EmailProviderService
+	userRepo       repository.UserRepository
+	emailCrypter   service.EmailCrypter
+	emailProvider  service.EmailProvider
+	emailValidator service.EmailValidator
 }
 
-func NewConfirmEmail(
-	emailCryptoService service.EmailCryptoService,
-	emailProvider service.EmailProviderService,
+func MustNewConfirmEmailUseCase(
+	userRepo repository.UserRepository,
+	emailCrypter service.EmailCrypter,
+	emailProvider service.EmailProvider,
+	emailValidator service.EmailValidator,
 ) *ConfirmEmailUseCase {
 	return &ConfirmEmailUseCase{
-		emailCryptoService: emailCryptoService,
-		emailProvider:      emailProvider,
+		userRepo:       userRepo,
+		emailCrypter:   emailCrypter,
+		emailProvider:  emailProvider,
+		emailValidator: emailValidator,
 	}
 }
 
 func (u *ConfirmEmailUseCase) Execute(
 	ctx context.Context,
-	input application.ConfirmEmailCommand,
+	input appdto.ConfirmEmailCommand,
 ) error {
+	if err := u.emailValidator.Validate(input.Email); err != nil {
+		return err
+	}
 	email, err := domain.NewEmail(input.Email)
 	if err != nil {
 		return err
 	}
-	encryptedEmail, err := u.emailCryptoService.Encrypt(email)
+	exists, err := u.userRepo.EmailExists(ctx, email.String())
 	if err != nil {
 		return err
 	}
-	emailMessage := application.EmailMessage{
-		To:   email.String(),
-		Data: encryptedEmail,
+	if exists {
+		return fmt.Errorf("%w: такая почта уже существует", application.ErrAlreadyExists)
 	}
-	err = u.emailProvider.SendConfirmEmail(ctx, emailMessage)
+	encryptedEmail, err := u.emailCrypter.Encrypt(email.String())
 	if err != nil {
 		return err
 	}
+	emailMessage := appdto.Email{
+		To:    email.String(),
+		Token: encryptedEmail,
+	}
+	go u.emailProvider.SendConfirmEmail(emailMessage)
 	return nil
 }

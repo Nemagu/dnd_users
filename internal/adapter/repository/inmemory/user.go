@@ -8,18 +8,19 @@ import (
 	"sync"
 
 	"github.com/Nemagu/dnd/internal/application"
-	"github.com/Nemagu/dnd/internal/domain"
-	"github.com/Nemagu/dnd/internal/domain/duser"
+	appdto "github.com/Nemagu/dnd/internal/application/dto"
 	"github.com/google/uuid"
 )
 
 type InMemoryUserRepository struct {
 	mu    sync.RWMutex
-	store map[uuid.UUID]*duser.User
+	store map[uuid.UUID]*appdto.User
 }
 
-func NewInMemoryUserRepository() *InMemoryUserRepository {
-	return &InMemoryUserRepository{}
+func MustNewInMemoryUserRepository() *InMemoryUserRepository {
+	return &InMemoryUserRepository{
+		store: make(map[uuid.UUID]*appdto.User),
+	}
 }
 
 func (r *InMemoryUserRepository) NextID(ctx context.Context) uuid.UUID {
@@ -29,41 +30,44 @@ func (r *InMemoryUserRepository) NextID(ctx context.Context) uuid.UUID {
 func (r *InMemoryUserRepository) IDExists(
 	ctx context.Context,
 	id uuid.UUID,
-) bool {
+) (bool, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	_, exists := r.store[id]
-	return exists
+	return exists, nil
 }
 
 func (r *InMemoryUserRepository) EmailExists(
 	ctx context.Context,
-	email domain.Email,
-) bool {
+	email string,
+) (bool, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	for _, u := range r.store {
-		if u.Email() == email {
-			return true
+		if u.Email == email {
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
-func (r *InMemoryUserRepository) GetAll(ctx context.Context) []*duser.User {
+func (r *InMemoryUserRepository) All(
+	ctx context.Context,
+	limit, offset int,
+) ([]*appdto.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	result := make([]*duser.User, 0, len(r.store))
+	result := make([]*appdto.User, 0, len(r.store))
 	for _, u := range r.store {
 		result = append(result, u)
 	}
-	return result
+	return result, nil
 }
 
-func (r *InMemoryUserRepository) GetByID(
+func (r *InMemoryUserRepository) ByID(
 	ctx context.Context,
 	id uuid.UUID,
-) (*duser.User, error) {
+) (*appdto.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	u, exists := r.store[id]
@@ -77,14 +81,14 @@ func (r *InMemoryUserRepository) GetByID(
 	return u, nil
 }
 
-func (r *InMemoryUserRepository) GetByEmail(
+func (r *InMemoryUserRepository) ByEmail(
 	ctx context.Context,
-	email domain.Email,
-) (*duser.User, error) {
+	email string,
+) (*appdto.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	for _, u := range r.store {
-		if u.Email() == email {
+		if u.Email == email {
 			return u, nil
 		}
 	}
@@ -98,20 +102,20 @@ func (r *InMemoryUserRepository) GetByEmail(
 func (r *InMemoryUserRepository) Filter(
 	ctx context.Context,
 	searchByEmail string,
-	filterByState []duser.UserState,
-	filterByStatus []duser.UserStatus,
+	filterByState []string,
+	filterByStatus []string,
 	limit, offset int,
-) ([]*duser.User, error) {
+) ([]*appdto.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	searchFlag := len(searchByEmail) > 0
 	filterByStateFlag := len(filterByState) > 0
 	filterByStatusFlag := len(filterByStatus) > 0
-	result := make([]*duser.User, 0)
+	result := make([]*appdto.User, 0)
 	for _, u := range r.store {
 		if searchFlag {
 			if !strings.Contains(
-				strings.ToLower(u.Email().String()),
+				strings.ToLower(u.Email),
 				searchByEmail,
 			) {
 				continue
@@ -120,7 +124,7 @@ func (r *InMemoryUserRepository) Filter(
 		if filterByStateFlag {
 			contain := false
 			for _, state := range filterByState {
-				if u.State() == state {
+				if u.State == state {
 					contain = true
 				}
 			}
@@ -131,7 +135,7 @@ func (r *InMemoryUserRepository) Filter(
 		if filterByStatusFlag {
 			contain := false
 			for _, status := range filterByStatus {
-				if u.Status() == status {
+				if u.Status == status {
 					contain = true
 				}
 			}
@@ -146,21 +150,10 @@ func (r *InMemoryUserRepository) Filter(
 
 func (r *InMemoryUserRepository) Save(
 	ctx context.Context,
-	user *duser.User,
+	user *appdto.User,
 ) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	u, err := duser.Restore(
-		user.ID(),
-		user.Email(),
-		user.State(),
-		user.Status(),
-		user.PasswordHash(),
-		user.ModifyVersion(),
-	)
-	if err != nil {
-		return fmt.Errorf("%w: %s", application.ErrInternal, err)
-	}
-	r.store[user.ID()] = u
+	r.store[user.UserID] = user
 	return nil
 }

@@ -13,21 +13,21 @@ const (
 	DELETED = "deleted"
 )
 
-type UserState string
+type State string
 
-func NewActiveState() UserState {
+func NewActiveState() State {
 	return ACTIVE
 }
 
-func NewFrozenState() UserState {
+func NewFrozenState() State {
 	return FROZEN
 }
 
-func NewDeletedState() UserState {
+func NewDeletedState() State {
 	return DELETED
 }
 
-func StateFromString(s string) (UserState, error) {
+func StateFromString(s string) (State, error) {
 	switch strings.ToLower(s) {
 	case ACTIVE:
 		return ACTIVE, nil
@@ -36,22 +36,26 @@ func StateFromString(s string) (UserState, error) {
 	case DELETED:
 		return DELETED, nil
 	default:
-		return "", fmt.Errorf("%w: %s", domain.ErrInvalidData, s)
+		return "", fmt.Errorf(
+			"%w: состояния %s не существует",
+			domain.ErrInvalidData,
+			s,
+		)
 	}
 }
 
-func (us UserState) IsActive() bool {
-	return us == ACTIVE
+func (s State) IsActive() bool {
+	return s == ACTIVE
 }
 
-func (us UserState) IsFrozen() bool {
-	return us == FROZEN
+func (s State) IsFrozen() bool {
+	return s == FROZEN
 }
 
-func (us UserState) IsDeleted() bool {
-	return us == DELETED
+func (s State) IsDeleted() bool {
+	return s == DELETED
 }
 
-func (us UserState) String() string {
-	return string(us)
+func (s State) String() string {
+	return string(s)
 }

@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/Nemagu/dnd/internal/application"
-	"github.com/Nemagu/dnd/internal/domain"
-	"github.com/Nemagu/dnd/internal/domain/duser"
+	appdto "github.com/Nemagu/dnd/internal/application/dto"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,12 +20,21 @@ const (
 )
 
 type PostgresUserRepository struct {
-	pool *pgxpool.Pool
+	logger *slog.Logger
+	pool   *pgxpool.Pool
 }
 
-func NewPostgresUserRepository(pool *pgxpool.Pool) *PostgresUserRepository {
+func NewPostgresUserRepository(logger *slog.Logger, pool *pgxpool.Pool) (*PostgresUserRepository, error) {
 	return &PostgresUserRepository{
-		pool: pool,
+		logger: logger,
+		pool:   pool,
+	}, nil
+}
+
+func MustNewPostgresUserRepository(logger *slog.Logger, pool *pgxpool.Pool) *PostgresUserRepository {
+	return &PostgresUserRepository{
+		logger: logger,
+		pool:   pool,
 	}
 }
 
@@ -42,33 +51,37 @@ func (r *PostgresUserRepository) IDExists(
 		"SELECT EXISTS(SELECT 1 FROM %s WHERE id = $1)",
 		userTable,
 	)
+	r.logger.DebugContext(ctx, "create query", "query", query)
 	err := r.pool.QueryRow(ctx, query, id).Scan(&exists)
 	if err != nil {
 		return exists, fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}
+	r.logger.DebugContext(ctx, "executed query", "query", query, "result", exists)
 	return exists, nil
 }
 
 func (r *PostgresUserRepository) EmailExists(
 	ctx context.Context,
-	email domain.Email,
+	email string,
 ) (bool, error) {
 	var exists bool
 	query := fmt.Sprintf(
 		"SELECT EXISTS(SELECT 1 FROM %s WHERE email = $1)",
 		userTable,
 	)
-	err := r.pool.QueryRow(ctx, query, email.String()).Scan(&exists)
+	r.logger.InfoContext(ctx, "try to execute query", "query", query)
+	err := r.pool.QueryRow(ctx, query, email).Scan(&exists)
 	if err != nil {
 		return exists, fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}
+	r.logger.DebugContext(ctx, "create query", "query", query, "result", exists)
 	return exists, nil
 }
 
 func (r *PostgresUserRepository) All(
 	ctx context.Context,
 	limit, offset int,
-) ([]*duser.User, error) {
+) ([]*appdto.User, error) {
 	query := fmt.Sprintf(
 		`SELECT
 			id,
@@ -82,18 +95,21 @@ func (r *PostgresUserRepository) All(
 	)
 	values := make([]any, 0, 2)
 	if limit > 0 {
+		r.logger.DebugContext(ctx, "add limit to query", "limit", limit)
 		query += fmt.Sprintf(" LIMIT $%d", len(values)+1)
 		values = append(values, limit)
 	}
 	if offset > 0 {
+		r.logger.DebugContext(ctx, "add offset to query", "offset", offset)
 		query += fmt.Sprintf(" OFFSET $%d", len(values)+1)
 		values = append(values, offset)
 	}
 	query += " ORDER BY email"
+	r.logger.InfoContext(ctx, "try to execute query", "query", query)
 	rows, err := r.pool.Query(ctx, query, values...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return make([]*duser.User, 0), nil
+			return make([]*appdto.User, 0), nil
 		}
 		return nil, fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}
@@ -102,7 +118,8 @@ func (r *PostgresUserRepository) All(
 	if limit != 0 {
 		cap = limit
 	}
-	result := make([]*duser.User, 0, cap)
+	result := make([]*appdto.User, 0, cap)
+	r.logger.InfoContext(ctx, "generate dto from executed query")
 	for rows.Next() {
 		u, err := buildUserFromRow(rows, "")
 		if err != nil {
@@ -110,13 +127,14 @@ func (r *PostgresUserRepository) All(
 		}
 		result = append(result, u)
 	}
+	r.logger.DebugContext(ctx, "success generated dto", "dto", result)
 	return result, nil
 }
 
 func (r *PostgresUserRepository) ByID(
 	ctx context.Context,
 	id uuid.UUID,
-) (*duser.User, error) {
+) (*appdto.User, error) {
 	query := fmt.Sprintf(
 		`SELECT 
 			id,
@@ -130,7 +148,9 @@ func (r *PostgresUserRepository) ByID(
 		ORDER BY email`,
 		userTable,
 	)
+	r.logger.InfoContext(ctx, "try to execute query", "query", query)
 	row := r.pool.QueryRow(ctx, query, id)
+	r.logger.InfoContext(ctx, "try generate dto from executed dto")
 	return buildUserFromRow(
 		row,
 		fmt.Sprintf("пользователя с id %s не существует", id),
@@ -139,8 +159,8 @@ func (r *PostgresUserRepository) ByID(
 
 func (r *PostgresUserRepository) ByEmail(
 	ctx context.Context,
-	email domain.Email,
-) (*duser.User, error) {
+	email string,
+) (*appdto.User, error) {
 	query := fmt.Sprintf(
 		`SELECT 
 		    id,
@@ -154,7 +174,9 @@ func (r *PostgresUserRepository) ByEmail(
 		ORDER BY email`,
 		userTable,
 	)
-	row := r.pool.QueryRow(ctx, query, email.String())
+	r.logger.InfoContext(ctx, "try to execute query", "query", query)
+	row := r.pool.QueryRow(ctx, query, email)
+	r.logger.InfoContext(ctx, "try generate dto from executed dto")
 	return buildUserFromRow(
 		row,
 		fmt.Sprintf("пользователя с email %s не существует", email),
@@ -164,10 +186,10 @@ func (r *PostgresUserRepository) ByEmail(
 func (r *PostgresUserRepository) Filter(
 	ctx context.Context,
 	searchByEmail string,
-	filterByState []duser.UserState,
-	filterByStatus []duser.UserStatus,
+	filterByState []string,
+	filterByStatus []string,
 	limit, offset int,
-) ([]*duser.User, error) {
+) ([]*appdto.User, error) {
 	query := fmt.Sprintf(
 		`SELECT
 		    id,
@@ -182,49 +204,47 @@ func (r *PostgresUserRepository) Filter(
 	conditions := make([]string, 0, 3)
 	values := make([]any, 0, 1+len(filterByState)+len(filterByStatus)+2)
 	if searchByEmail != "" {
+		r.logger.DebugContext(ctx, "add searching by email to query", "email", searchByEmail)
 		condition := fmt.Sprintf("LOWER(email) LIKE $%d", len(values)+1)
 		conditions = append(conditions, condition)
 		values = append(values, "%"+strings.ToLower(searchByEmail)+"%")
 	}
 	if len(filterByState) != 0 {
-		temp := make([]string, 0, len(filterByState))
-		for _, state := range filterByState {
-			temp = append(temp, fmt.Sprintf("$%d", len(values)+1))
-			values = append(values, state.String())
-		}
-		condition := "state IN (" + strings.Join(temp, ",") + ")"
+		r.logger.DebugContext(ctx, "add filtering by state to query", "states", filterByState)
+		condition := "state IN (" + strings.Join(filterByState, ",") + ")"
 		conditions = append(conditions, condition)
 	}
 	if len(filterByStatus) != 0 {
-		temp := make([]string, 0, len(filterByStatus))
-		for _, status := range filterByStatus {
-			temp = append(temp, fmt.Sprintf("$%d", len(values)+1))
-			values = append(values, status.String())
-		}
-		condition := "status IN (" + strings.Join(temp, ",") + ")"
+		r.logger.DebugContext(ctx, "add filtering by status to query", "statuses", filterByStatus)
+		condition := "status IN (" + strings.Join(filterByStatus, ",") + ")"
 		conditions = append(conditions, condition)
 	}
 	if len(values) > 0 {
+		r.logger.DebugContext(ctx, "join conditions")
 		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
 	if limit > 0 {
+		r.logger.DebugContext(ctx, "add limit to query", "limit", limit)
 		query += fmt.Sprintf(" LIMIT $%d", len(values)+1)
 		values = append(values, limit)
 	}
 	if offset > 0 {
+		r.logger.DebugContext(ctx, "add offset to query", "offset", offset)
 		query += fmt.Sprintf(" OFFSET $%d", len(values)+1)
 		values = append(values, offset)
 	}
 	query += " ORDER BY email"
+	r.logger.InfoContext(ctx, "try to execute query", "query", query)
 	rows, err := r.pool.Query(ctx, query, values...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return make([]*duser.User, 0), nil
+			return make([]*appdto.User, 0), nil
 		}
 		return nil, fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}
 	defer rows.Close()
-	result := make([]*duser.User, 0)
+	result := make([]*appdto.User, 0)
+	r.logger.InfoContext(ctx, "try generate dto from executed dto")
 	for rows.Next() {
 		u, err := buildUserFromRow(rows, "")
 		if err != nil {
@@ -232,33 +252,41 @@ func (r *PostgresUserRepository) Filter(
 		}
 		result = append(result, u)
 	}
+	r.logger.DebugContext(ctx, "success generated dto", "dto", result)
 	return result, nil
 }
 
 func (r *PostgresUserRepository) Save(
 	ctx context.Context,
-	user *duser.User,
+	user *appdto.User,
 ) error {
-	exists, err := r.IDExists(ctx, user.ID())
+	r.logger.DebugContext(ctx, "check exists")
+	exists, err := r.IDExists(ctx, user.UserID)
 	if err != nil {
 		return err
 	}
-	if !exists {
+	switch {
+	case exists:
+		r.logger.InfoContext(ctx, "try to create user")
 		err = r.create(ctx, user)
 		if err != nil {
 			return err
 		}
-	}
-	err = r.update(ctx, user)
-	if err != nil {
-		return err
+		r.logger.DebugContext(ctx, "user created", "user", user)
+	default:
+		r.logger.InfoContext(ctx, "try to update user")
+		err = r.update(ctx, user)
+		if err != nil {
+			return err
+		}
+		r.logger.DebugContext(ctx, "user updated", "user", user)
 	}
 	return nil
 }
 
 func (r *PostgresUserRepository) create(
 	ctx context.Context,
-	user *duser.User,
+	user *appdto.User,
 ) error {
 	userStmt := fmt.Sprintf(
 		`INSERT INTO %s (
@@ -284,37 +312,42 @@ func (r *PostgresUserRepository) create(
 		VALUES ($1, $2, $3, $4, $5, $6)`,
 		userVersionTable,
 	)
+	r.logger.InfoContext(ctx, "try to begin transaction")
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}
 	defer func() {
 		if tx != nil {
-			tx.Rollback(ctx)
+			if err := tx.Rollback(ctx); err != nil {
+				r.logger.ErrorContext(ctx, "rollback failed")
+			}
 		}
 	}()
+	r.logger.InfoContext(ctx, "try to execute statement", "stmt", userStmt)
 	_, err = tx.Exec(
 		ctx,
 		userStmt,
-		user.ID(),
-		user.Email().String(),
-		user.State().String(),
-		user.Status().String(),
-		user.PasswordHash(),
-		user.ModifyVersion(),
+		user.UserID,
+		user.Email,
+		user.State,
+		user.Status,
+		user.PasswordHash,
+		user.Version,
 	)
 	if err != nil {
 		return fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}
+	r.logger.InfoContext(ctx, "try to execute statement", "stmt", versionStmt)
 	_, err = tx.Exec(
 		ctx,
 		versionStmt,
-		user.ID(),
-		user.Email().String(),
-		user.State().String(),
-		user.Status().String(),
-		user.PasswordHash(),
-		user.ModifyVersion(),
+		user.UserID,
+		user.Email,
+		user.State,
+		user.Status,
+		user.PasswordHash,
+		user.Version,
 	)
 	if err != nil {
 		return fmt.Errorf("%w: %s", application.ErrInternal, err)
@@ -328,7 +361,7 @@ func (r *PostgresUserRepository) create(
 
 func (r *PostgresUserRepository) update(
 	ctx context.Context,
-	user *duser.User,
+	user *appdto.User,
 ) error {
 	query := fmt.Sprintf(
 		`SELECT version
@@ -361,55 +394,61 @@ func (r *PostgresUserRepository) update(
 		userVersionTable,
 	)
 	var currentVersion uint64
+	r.logger.InfoContext(ctx, "try to begin transaction")
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}
 	defer func() {
 		if tx != nil {
-			tx.Rollback(ctx)
+			if err := tx.Rollback(ctx); err != nil {
+				r.logger.ErrorContext(ctx, "rollback failed")
+			}
 		}
 	}()
-	err = tx.QueryRow(ctx, query, user.ID()).Scan(&currentVersion)
+	r.logger.InfoContext(ctx, "try to execute query", "query", query)
+	err = tx.QueryRow(ctx, query, user.UserID).Scan(&currentVersion)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return fmt.Errorf(
 				"%w: пользователя с id %s не существует",
 				application.ErrNotFound,
-				user.ID(),
+				user.UserID,
 			)
 		}
 		return fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}
-	if currentVersion != user.Version() {
+	if currentVersion != user.Version {
 		return fmt.Errorf(
 			"%w: версия пользователя с id %s не совпадает",
 			application.ErrVersionConflict,
-			user.ID(),
+			user.UserID,
 		)
 	}
+	r.logger.InfoContext(ctx, "try to execute statement", "stmt", userStmt)
 	_, err = tx.Exec(
 		ctx,
 		userStmt,
-		user.ID(),
-		user.Email().String(),
-		user.State().String(),
-		user.Status().String(),
-		user.PasswordHash(),
-		user.ModifyVersion(),
+		user.UserID,
+		user.Email,
+		user.State,
+		user.Status,
+		user.PasswordHash,
+		user.Version,
 	)
 	if err != nil {
 		return fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}
+	r.logger.InfoContext(ctx, "try to execute statement", "stmt", versionStmt)
 	_, err = tx.Exec(
 		ctx,
 		versionStmt,
-		user.ID(),
-		user.Email().String(),
-		user.State().String(),
-		user.Status().String(),
-		user.PasswordHash(),
-		user.ModifyVersion(),
+		user.UserID,
+		user.Email,
+		user.State,
+		user.Status,
+		user.PasswordHash,
+		user.Version,
 	)
 	if err != nil {
 		return fmt.Errorf("%w: %s", application.ErrInternal, err)
@@ -423,22 +462,15 @@ func (r *PostgresUserRepository) update(
 
 func buildUserFromRow(
 	row pgx.Row, msg string,
-) (*duser.User, error) {
-	var (
-		userID       uuid.UUID
-		email        string
-		state        string
-		status       string
-		passwordHash string
-		version      uint64
-	)
+) (*appdto.User, error) {
+	var u = appdto.User{}
 	if err := row.Scan(
-		&userID,
-		&email,
-		&state,
-		&status,
-		&passwordHash,
-		&version,
+		&u.UserID,
+		&u.Email,
+		&u.State,
+		&u.Status,
+		&u.PasswordHash,
+		&u.Version,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf(
@@ -449,36 +481,5 @@ func buildUserFromRow(
 		}
 		return nil, fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}
-	domainEmail, err := domain.NewEmail(email)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", application.ErrInternal, err)
-	}
-	domainState, err := duser.StateFromString(state)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", application.ErrInternal, err)
-	}
-	domainStatus, err := duser.StatusFromString(status)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"%w: %s",
-			application.ErrInternal,
-			err,
-		)
-	}
-	u, err := duser.Restore(
-		userID,
-		domainEmail,
-		domainState,
-		domainStatus,
-		passwordHash,
-		version,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"%w: %s",
-			application.ErrInternal,
-			err,
-		)
-	}
-	return u, nil
+	return &u, nil
 }

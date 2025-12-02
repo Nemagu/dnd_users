@@ -1,22 +1,26 @@
 package service
 
 import (
-	"context"
-
-	"github.com/Nemagu/dnd/internal/application"
+	appdto "github.com/Nemagu/dnd/internal/application/dto"
 )
 
-type EmailProviderService interface {
+type EmailProvider interface {
 	SendConfirmEmail(
-		ctx context.Context,
-		message application.EmailMessage,
-	) error
+		message appdto.Email,
+	)
 	SendChangeEmail(
-		ctx context.Context,
-		message application.EmailMessage,
-	) error
+		message appdto.Email,
+	)
 	SendResetPasswordEmail(
-		ctx context.Context,
-		message application.EmailMessage,
-	) error
+		message appdto.Email,
+	)
+}
+
+type EmailCrypter interface {
+	Encrypt(email string) (string, error)
+	Decrypt(token string) (string, error)
+}
+
+type EmailValidator interface {
+	Validate(email string) error
 }
