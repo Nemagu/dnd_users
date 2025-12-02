@@ -27,6 +27,15 @@ type AuthenticateCommand struct {
 	Password string
 }
 
+type ChangeUserCommand struct {
+	InitiatorID uuid.UUID
+	UserID      uuid.UUID
+	Email       string
+	State       string
+	Status      string
+	Password    string
+}
+
 type UpdateUserCommand struct {
 	InitiatorID uuid.UUID
 	UserID      uuid.UUID

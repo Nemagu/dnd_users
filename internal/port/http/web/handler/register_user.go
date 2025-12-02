@@ -39,7 +39,7 @@ func (h *RegisterUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Token:    body.Token,
 		Password: body.Password,
 	}
-	id, err := h.useCase.Execute(r.Context(), input)
+	id, err := h.useCase.Execute(r.Context(), &input)
 	if err != nil {
 		h.BaseHandler.errorHandle(r.Context(), w, err)
 		return
@@ -49,9 +49,5 @@ func (h *RegisterUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}{
 		UserID: id,
 	}
-	err = h.BaseHandler.responseEncoder.Encode(r.Context(), w, http.StatusOK, response)
-	if err != nil {
-		h.BaseHandler.errorHandle(r.Context(), w, err)
-		return
-	}
+	h.BaseHandler.responseEncoder.Encode(r.Context(), w, http.StatusOK, response)
 }

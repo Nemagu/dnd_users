@@ -22,7 +22,7 @@ func MustNewJSONResponseEncoder(logger *slog.Logger) *JSONResponseEncoder {
 
 func (e *JSONResponseEncoder) Encode(
 	ctx context.Context, w http.ResponseWriter, statusCode int, response any,
-) error {
+) {
 	err := json.NewEncoder(w).Encode(response)
 	if err != nil {
 		e.logger.ErrorContext(
@@ -30,5 +30,4 @@ func (e *JSONResponseEncoder) Encode(
 			"encode_error", err,
 		)
 	}
-	return err
 }

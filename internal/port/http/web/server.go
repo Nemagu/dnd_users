@@ -76,7 +76,7 @@ func (s *HTTPServer) createAPIRouter() *chi.Mux {
 		userRepo, emailCrypter, emailProvider, emailValidator,
 	)
 	registerUserUC := usecase.MustNewRegisterUserUseCase(
-		userRepo, passwordValidator, passwordHasher, emailCrypter,
+		userRepo, passwordValidator, passwordHasher, emailCrypter, emailValidator,
 	)
 	confirmNewEmailUC := usecase.MustNewConfirmNewEmailUseCase(
 		userRepo, passwordHasher, emailCrypter, emailValidator, emailProvider,

@@ -6,33 +6,35 @@ import (
 
 	"github.com/Nemagu/dnd/internal/application"
 	appdto "github.com/Nemagu/dnd/internal/application/dto"
-	"github.com/Nemagu/dnd/internal/application/repository"
-	"github.com/Nemagu/dnd/internal/application/service"
 	"github.com/google/uuid"
 )
 
+type AuthenticateUserRepository interface {
+	ByEmail(ctx context.Context, email string) (*appdto.User, error)
+}
+
 type AuthenticateUseCase struct {
-	userRepo       repository.UserRepository
-	passwordHasher service.PasswordHasher
+	userRepo         AuthenticateUserRepository
+	passwordComparer PasswordComparer
 }
 
 func MustNewAuthenticateUseCase(
-	userRepo repository.UserRepository, passwordHasher service.PasswordHasher,
+	userRepo AuthenticateUserRepository, passwordComparer PasswordComparer,
 ) *AuthenticateUseCase {
 	if userRepo == nil {
 		panic("auth use case does not get user repository")
 	}
-	if passwordHasher == nil {
+	if passwordComparer == nil {
 		panic("auth use case does not get password hasher")
 	}
 	return &AuthenticateUseCase{
-		userRepo:       userRepo,
-		passwordHasher: passwordHasher,
+		userRepo:         userRepo,
+		passwordComparer: passwordComparer,
 	}
 }
 
 func (u *AuthenticateUseCase) Execute(
-	ctx context.Context, input appdto.AuthenticateCommand,
+	ctx context.Context, input *appdto.AuthenticateCommand,
 ) (uuid.UUID, error) {
 	stdErr := fmt.Errorf(
 		"%w: не верный логин или пароль", application.ErrCredential,
@@ -41,7 +43,7 @@ func (u *AuthenticateUseCase) Execute(
 	if err != nil {
 		return uuid.Nil, stdErr
 	}
-	compare, err := u.passwordHasher.ComparePassword(input.Password, user.PasswordHash)
+	compare, err := u.passwordComparer.ComparePassword(input.Password, user.PasswordHash)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}

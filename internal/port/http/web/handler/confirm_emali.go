@@ -36,7 +36,7 @@ func (h *ConfirmEmailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	input := appdto.ConfirmEmailCommand{
 		Email: body.Email,
 	}
-	if err := h.useCase.Execute(r.Context(), input); err != nil {
+	if err := h.useCase.Execute(r.Context(), &input); err != nil {
 		h.BaseHandler.errorHandle(r.Context(), w, err)
 		return
 	}

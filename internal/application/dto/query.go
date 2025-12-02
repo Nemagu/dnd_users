@@ -10,6 +10,8 @@ type UserQuery struct {
 type UsersQuery struct {
 	InitiatorID    uuid.UUID
 	SearchByEmail  string
-	FilterByState  string
-	FilterByStatus string
+	FilterByState  []string
+	FilterByStatus []string
+	Limit          int
+	Offset         int
 }

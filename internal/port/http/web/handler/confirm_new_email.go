@@ -48,7 +48,7 @@ func (h *ConfirmNewEmailHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Email:    body.Email,
 		Password: body.Password,
 	}
-	err := h.useCase.Execute(r.Context(), input)
+	err := h.useCase.Execute(r.Context(), &input)
 	if err != nil {
 		h.BaseHandler.errorHandle(r.Context(), w, err)
 		return

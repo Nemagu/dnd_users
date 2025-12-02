@@ -39,9 +39,5 @@ func (h *JWTRefreshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.BaseHandler.errorHandle(r.Context(), w, err)
 		return
 	}
-	err = h.BaseHandler.responseEncoder.Encode(r.Context(), w, http.StatusOK, tokens)
-	if err != nil {
-		h.BaseHandler.errorHandle(r.Context(), w, err)
-		return
-	}
+	h.BaseHandler.responseEncoder.Encode(r.Context(), w, http.StatusOK, tokens)
 }

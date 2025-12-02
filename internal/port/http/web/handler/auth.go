@@ -50,7 +50,7 @@ func (h *JWTAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Email:    body.Email,
 		Password: body.Password,
 	}
-	userID, err := h.useCase.Execute(r.Context(), input)
+	userID, err := h.useCase.Execute(r.Context(), &input)
 	if err != nil {
 		h.BaseHandler.errorHandle(r.Context(), w, err)
 		return
@@ -60,9 +60,5 @@ func (h *JWTAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.BaseHandler.errorHandle(r.Context(), w, err)
 		return
 	}
-	err = h.BaseHandler.responseEncoder.Encode(r.Context(), w, http.StatusOK, tokens)
-	if err != nil {
-		h.BaseHandler.errorHandle(r.Context(), w, err)
-		return
-	}
+	h.BaseHandler.responseEncoder.Encode(r.Context(), w, http.StatusOK, tokens)
 }

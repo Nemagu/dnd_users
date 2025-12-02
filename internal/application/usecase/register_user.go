@@ -6,55 +6,94 @@ import (
 
 	"github.com/Nemagu/dnd/internal/application"
 	appdto "github.com/Nemagu/dnd/internal/application/dto"
-	"github.com/Nemagu/dnd/internal/application/repository"
-	"github.com/Nemagu/dnd/internal/application/service"
-	"github.com/Nemagu/dnd/internal/domain"
-	"github.com/Nemagu/dnd/internal/domain/duser"
 	"github.com/google/uuid"
 )
 
+type RegisterUserRepository interface {
+	NextID(
+		ctx context.Context,
+	) uuid.UUID
+	Save(
+		ctx context.Context,
+		user *appdto.User,
+	) error
+}
+
+type EmailValidator interface {
+	Validate(
+		email string,
+	) error
+}
+
+type PasswordValidator interface {
+	Validate(
+		password string,
+		email string,
+	) error
+}
+
+type PasswordHasher interface {
+	Hash(
+		password string,
+	) (string, error)
+}
+
+type EmailDecrypter interface {
+	Decrypt(
+		token string,
+	) (string, error)
+}
+
 type RegisterUserUseCase struct {
-	userRepo          repository.UserRepository
-	passwordValidator service.PasswordValidator
-	passwordHasher    service.PasswordHasher
-	emailCrypter      service.EmailCrypter
-	emailValidator    service.EmailValidator
+	userRepo          RegisterUserRepository
+	passwordValidator PasswordValidator
+	passwordHasher    PasswordHasher
+	emailDecrypter    EmailDecrypter
+	emailValidator    EmailValidator
 }
 
 func NewRegisterUserUseCase(
-	userRepo repository.UserRepository,
-	passwordValidator service.PasswordValidator,
-	passwordHasher service.PasswordHasher,
-	emailCrypter service.EmailCrypter,
+	userRepo RegisterUserRepository,
+	passwordValidator PasswordValidator,
+	passwordHasher PasswordHasher,
+	emailDecrypter EmailDecrypter,
+	emailValidator EmailValidator,
 ) (*RegisterUserUseCase, error) {
 	return &RegisterUserUseCase{
 		userRepo:          userRepo,
 		passwordValidator: passwordValidator,
 		passwordHasher:    passwordHasher,
-		emailCrypter:      emailCrypter,
+		emailDecrypter:    emailDecrypter,
+		emailValidator:    emailValidator,
 	}, nil
 }
 
 func MustNewRegisterUserUseCase(
-	userRepo repository.UserRepository,
-	passwordValidator service.PasswordValidator,
-	passwordHasher service.PasswordHasher,
-	emailCrypter service.EmailCrypter,
+	userRepo RegisterUserRepository,
+	passwordValidator PasswordValidator,
+	passwordHasher PasswordHasher,
+	emailDecrypter EmailDecrypter,
+	emailValidator EmailValidator,
 ) *RegisterUserUseCase {
 	return &RegisterUserUseCase{
 		userRepo:          userRepo,
 		passwordValidator: passwordValidator,
 		passwordHasher:    passwordHasher,
-		emailCrypter:      emailCrypter,
+		emailDecrypter:    emailDecrypter,
+		emailValidator:    emailValidator,
 	}
 }
 
 func (u *RegisterUserUseCase) Execute(
 	ctx context.Context,
-	input appdto.RegisterUserCommand,
+	input *appdto.RegisterUserCommand,
 ) (uuid.UUID, error) {
-	email, err := u.emailCrypter.Decrypt(input.Token)
+	email, err := u.emailDecrypter.Decrypt(input.Token)
 	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	if err := u.emailValidator.Validate(email); err != nil {
 		return uuid.UUID{}, err
 	}
 
@@ -68,30 +107,18 @@ func (u *RegisterUserUseCase) Execute(
 		return uuid.UUID{}, err
 	}
 
-	domainEmail, err := domain.NewEmail(email)
-	if err != nil {
-		return uuid.UUID{}, fmt.Errorf("%w: %s", application.ErrValidation, err)
-	}
-
-	domainUser, err := duser.New(
+	domainUser, err := newDomainUser(
 		u.userRepo.NextID(ctx),
-		domainEmail,
+		email,
 		passwordHash,
 	)
 	if err != nil {
 		return uuid.UUID{}, fmt.Errorf("%w: %s", application.ErrValidation, err)
 	}
 
-	dtoUser := appdto.User{
-		UserID:       domainUser.ID(),
-		Email:        domainUser.Email().String(),
-		State:        domainUser.State().String(),
-		Status:       domainUser.Status().String(),
-		PasswordHash: domainUser.PasswordHash(),
-		Version:      domainUser.ModifyVersion(),
-	}
+	dtoUser := toAppUser(domainUser)
 
-	if err := u.userRepo.Save(ctx, &dtoUser); err != nil {
+	if err := u.userRepo.Save(ctx, dtoUser); err != nil {
 		return uuid.UUID{}, err
 	}
 

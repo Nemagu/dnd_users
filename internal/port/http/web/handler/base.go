@@ -13,7 +13,7 @@ type ErrorParser interface {
 }
 
 type ResponseEncoder interface {
-	Encode(ctx context.Context, w http.ResponseWriter, statusCode int, response any) error
+	Encode(ctx context.Context, w http.ResponseWriter, statusCode int, response any)
 }
 
 type RequestDecoder interface {

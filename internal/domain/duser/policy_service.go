@@ -9,3 +9,7 @@ func NewPolicyService() (*PolicyService, error) {
 func (s *PolicyService) CanEditOther(user *User) bool {
 	return user.State().IsActive() && user.Status().IsAdmin()
 }
+
+func (s *PolicyService) CanReadAll(user *User) bool {
+	return user.State().IsActive() && user.Status().IsAdmin()
+}

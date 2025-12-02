@@ -6,23 +6,34 @@ import (
 
 	"github.com/Nemagu/dnd/internal/application"
 	appdto "github.com/Nemagu/dnd/internal/application/dto"
-	"github.com/Nemagu/dnd/internal/application/repository"
-	"github.com/Nemagu/dnd/internal/application/service"
 	"github.com/Nemagu/dnd/internal/domain"
 )
 
+type ConfirmEmailUserRepository interface {
+	EmailExists(
+		ctx context.Context,
+		email string,
+	) (bool, error)
+}
+
+type ConfirmEmailProvider interface {
+	SendConfirmEmail(
+		message appdto.Email,
+	)
+}
+
 type ConfirmEmailUseCase struct {
-	userRepo       repository.UserRepository
-	emailCrypter   service.EmailCrypter
-	emailProvider  service.EmailProvider
-	emailValidator service.EmailValidator
+	userRepo       ConfirmEmailUserRepository
+	emailCrypter   EmailCrypter
+	emailProvider  ConfirmEmailProvider
+	emailValidator EmailValidator
 }
 
 func MustNewConfirmEmailUseCase(
-	userRepo repository.UserRepository,
-	emailCrypter service.EmailCrypter,
-	emailProvider service.EmailProvider,
-	emailValidator service.EmailValidator,
+	userRepo ConfirmEmailUserRepository,
+	emailCrypter EmailCrypter,
+	emailProvider ConfirmEmailProvider,
+	emailValidator EmailValidator,
 ) *ConfirmEmailUseCase {
 	return &ConfirmEmailUseCase{
 		userRepo:       userRepo,
@@ -34,7 +45,7 @@ func MustNewConfirmEmailUseCase(
 
 func (u *ConfirmEmailUseCase) Execute(
 	ctx context.Context,
-	input appdto.ConfirmEmailCommand,
+	input *appdto.ConfirmEmailCommand,
 ) error {
 	if err := u.emailValidator.Validate(input.Email); err != nil {
 		return err

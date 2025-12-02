@@ -6,44 +6,67 @@ import (
 
 	"github.com/Nemagu/dnd/internal/application"
 	appdto "github.com/Nemagu/dnd/internal/application/dto"
-	"github.com/Nemagu/dnd/internal/application/repository"
-	"github.com/Nemagu/dnd/internal/application/service"
+	"github.com/google/uuid"
 )
 
+type ConfirmNewEmailUserRepository interface {
+	ByID(
+		ctx context.Context,
+		id uuid.UUID,
+	) (*appdto.User, error)
+}
+
+type PasswordComparer interface {
+	ComparePassword(
+		password string,
+		hash string,
+	) (bool, error)
+}
+
+type EmailCrypter interface {
+	Encrypt(email string) (string, error)
+}
+
+type ConfirmNewEmailProvider interface {
+	SendChangeEmail(
+		message appdto.Email,
+	)
+}
+
 type ConfirmNewEmailUseCase struct {
-	userRepo       repository.UserRepository
-	passwordHasher service.PasswordHasher
-	emailCrypter   service.EmailCrypter
-	emailValidator service.EmailValidator
-	emailProvider  service.EmailProvider
+	userRepo         ConfirmNewEmailUserRepository
+	passwordComparer PasswordComparer
+	emailCrypter     EmailCrypter
+	emailValidator   EmailValidator
+	emailProvider    ConfirmNewEmailProvider
 }
 
 func MustNewConfirmNewEmailUseCase(
-	userRepo repository.UserRepository,
-	passwordHasher service.PasswordHasher,
-	emailCrypter service.EmailCrypter,
-	emailValidator service.EmailValidator,
-	emailProvider service.EmailProvider,
+	userRepo ConfirmNewEmailUserRepository,
+	passwordComparer PasswordComparer,
+	emailCrypter EmailCrypter,
+	emailValidator EmailValidator,
+	emailProvider ConfirmNewEmailProvider,
 ) *ConfirmNewEmailUseCase {
 	return &ConfirmNewEmailUseCase{
-		userRepo:       userRepo,
-		passwordHasher: passwordHasher,
-		emailCrypter:   emailCrypter,
-		emailValidator: emailValidator,
-		emailProvider:  emailProvider,
+		userRepo:         userRepo,
+		passwordComparer: passwordComparer,
+		emailCrypter:     emailCrypter,
+		emailValidator:   emailValidator,
+		emailProvider:    emailProvider,
 	}
 }
 
 func (u *ConfirmNewEmailUseCase) Execute(
 	ctx context.Context,
-	input appdto.ConfirmNewEmailCommand,
+	input *appdto.ConfirmNewEmailCommand,
 ) error {
 	user, err := u.userRepo.ByID(ctx, input.UserID)
 	if err != nil {
 		return err
 	}
 
-	compare, err := u.passwordHasher.ComparePassword(
+	compare, err := u.passwordComparer.ComparePassword(
 		input.Password,
 		user.PasswordHash,
 	)
