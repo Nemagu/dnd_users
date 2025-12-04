@@ -7,24 +7,24 @@ import (
 	"github.com/Nemagu/dnd/internal/application/usecase"
 )
 
-type ConfirmEmailHandler struct {
+type ConfirmResetPasswordHandler struct {
 	BaseHandler
-	useCase *usecase.ConfirmEmailUseCase
+	useCase *usecase.ConfirmResetPasswordUseCase
 }
 
-func MustNewConfirmEmailHandler(
-	base BaseHandler, useCase *usecase.ConfirmEmailUseCase,
-) *ConfirmEmailHandler {
+func MustNewConfirmResetPasswordHandler(
+	base BaseHandler, useCase *usecase.ConfirmResetPasswordUseCase,
+) *ConfirmResetPasswordHandler {
 	if useCase == nil {
-		panic("confirm email handler does not get use case")
+		panic("confirm reset password handler does not get use case")
 	}
-	return &ConfirmEmailHandler{
+	return &ConfirmResetPasswordHandler{
 		BaseHandler: base,
 		useCase:     useCase,
 	}
 }
 
-func (h *ConfirmEmailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *ConfirmResetPasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Email string `json:"email"`
 	}
@@ -33,12 +33,15 @@ func (h *ConfirmEmailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		h.BaseHandler.handleError(r.Context(), w, err)
 		return
 	}
-	input := appdto.ConfirmEmailCommand{
+
+	input := appdto.ConfirmResetPasswordCommand{
 		Email: body.Email,
 	}
-	if err := h.useCase.Execute(r.Context(), &input); err != nil {
+
+	if err := h.useCase.Execute(r.Context(), input); err != nil {
 		h.BaseHandler.handleError(r.Context(), w, err)
 		return
 	}
+
 	w.WriteHeader(http.StatusOK)
 }

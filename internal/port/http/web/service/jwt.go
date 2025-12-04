@@ -1,7 +1,6 @@
 package webservice
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -76,7 +75,7 @@ func (p *JWTProvider) ValidateToken(tokenString string) (any, error) {
 }
 
 func (p *JWTProvider) UserID(clm any) (uuid.UUID, error) {
-	if claims, ok := clm.(*JWTClaims); ok {
+	if claims, ok := clm.(JWTClaims); ok {
 		return claims.UserID, nil
 	} else {
 		return uuid.UUID{}, &weberror.ResponseError{
@@ -98,13 +97,10 @@ func (p *JWTProvider) validateToken(tokenString string) (JWTClaims, error) {
 		return p.secret, nil
 	})
 	if err != nil {
-		if errors.Is(err, jwt.ErrSignatureInvalid) {
-			return claims, &weberror.ResponseError{
-				StatusCode: http.StatusUnauthorized,
-				Detail:     "invalid jwt token",
-			}
+		return claims, &weberror.ResponseError{
+			StatusCode: http.StatusUnauthorized,
+			Detail:     err.Error(),
 		}
-		return JWTClaims{}, err
 	}
 	if !token.Valid {
 		return claims, &weberror.ResponseError{

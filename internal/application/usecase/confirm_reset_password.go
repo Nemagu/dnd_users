@@ -28,6 +28,32 @@ type ConfirmResetPasswordUseCase struct {
 	emailProvider  ConfirmResetPasswordEmailProvider
 }
 
+func MustNewConfirmResetPasswordUseCase(
+	userRepo ConfirmResetPasswordUserRepository,
+	emailValidator EmailValidator,
+	emailCrypter EmailCrypter,
+	emailProvider ConfirmResetPasswordEmailProvider,
+) *ConfirmResetPasswordUseCase {
+	if userRepo == nil {
+		panic("confirm reset password use case does not get user repository")
+	}
+	if emailValidator == nil {
+		panic("confirm reset password use case does not get email validator")
+	}
+	if emailCrypter == nil {
+		panic("confirm reset password use case does not get email crypter")
+	}
+	if emailProvider == nil {
+		panic("confirm reset password use case does not get email provider")
+	}
+	return &ConfirmResetPasswordUseCase{
+		userRepo:       userRepo,
+		emailValidator: emailValidator,
+		emailCrypter:   emailCrypter,
+		emailProvider:  emailProvider,
+	}
+}
+
 func (u *ConfirmResetPasswordUseCase) Execute(
 	ctx context.Context, input appdto.ConfirmResetPasswordCommand,
 ) error {

@@ -6,6 +6,10 @@ func NewPolicyService() (*PolicyService, error) {
 	return &PolicyService{}, nil
 }
 
+func MustNewPolicyService() *PolicyService {
+	return &PolicyService{}
+}
+
 func (s *PolicyService) CanEditOther(user *User) bool {
 	return user.State().IsActive() && user.Status().IsAdmin()
 }

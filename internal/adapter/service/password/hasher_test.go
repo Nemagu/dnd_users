@@ -53,7 +53,7 @@ func TestHasher_Compare_Success(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			compared, err := hasher.ComparePassword(c, hash)
+			compared, err := hasher.Compare(c, hash)
 			if err != nil {
 				t.Error(err)
 			}
@@ -81,7 +81,7 @@ func TestHasher_Compare_Bad(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			compared, err := hasher.ComparePassword(c, hash)
+			compared, err := hasher.Compare(c, hash)
 			if err != nil {
 				t.Error(err)
 			}

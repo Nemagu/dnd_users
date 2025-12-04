@@ -64,9 +64,14 @@ func (m *JWTAuth) Middleware(next http.Handler) http.Handler {
 		}
 		ctx := r.Context()
 		if len(authHeader) < 10 || authHeader[:7] != "Bearer " {
-			m.responseEncoder.Encode(r.Context(), w, http.StatusUnauthorized, &weberror.ResponseError{
-				Detail: "invalid token",
-			})
+			m.responseEncoder.Encode(
+				r.Context(),
+				w,
+				http.StatusUnauthorized,
+				&weberror.ResponseError{
+					Detail: "invalid token",
+				},
+			)
 			return
 		}
 		token := authHeader[7:]

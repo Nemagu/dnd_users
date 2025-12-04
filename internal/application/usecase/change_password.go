@@ -47,10 +47,6 @@ func MustNewChangePasswordUseCase(
 func (u *ChangePasswordUseCase) Execute(
 	ctx context.Context, input *appdto.ChangePasswordCommand,
 ) error {
-	if input.InitiatorID != input.UserID {
-		return fmt.Errorf("%w: вы можете изменить только свой пароль", application.ErrNotAllowed)
-	}
-
 	appUser, err := u.userRepo.ByID(ctx, input.UserID)
 	if err != nil {
 		return err
@@ -61,7 +57,7 @@ func (u *ChangePasswordUseCase) Execute(
 		return err
 	}
 
-	compare, err := u.passwordComparer.ComparePassword(input.OldPassword, domainUser.PasswordHash())
+	compare, err := u.passwordComparer.Compare(input.OldPassword, domainUser.PasswordHash())
 	if err != nil {
 		return err
 	}
@@ -83,6 +79,10 @@ func (u *ChangePasswordUseCase) Execute(
 
 	if err = domainUser.ChangePassword(hashedPassword); err != nil {
 		return handleError(err)
+	}
+
+	if err = u.userRepo.Save(ctx, toModifyAppUser(domainUser)); err != nil {
+		return err
 	}
 
 	return nil

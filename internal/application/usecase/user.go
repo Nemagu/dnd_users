@@ -38,6 +38,10 @@ func (u *UserUseCase) Execute(ctx context.Context, input *appdto.UserQuery) (*ap
 		return nil, err
 	}
 
+	if input.UserID == input.InitiatorID {
+		return appInitiator, nil
+	}
+
 	domainInitiator, err := restoreDomainUser(appInitiator)
 	if err != nil {
 		return nil, err

@@ -43,7 +43,7 @@ func (u *AuthenticateUseCase) Execute(
 	if err != nil {
 		return uuid.Nil, stdErr
 	}
-	compare, err := u.passwordComparer.ComparePassword(input.Password, user.PasswordHash)
+	compare, err := u.passwordComparer.Compare(input.Password, user.PasswordHash)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}

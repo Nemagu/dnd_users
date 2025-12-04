@@ -85,7 +85,7 @@ func (u *ResetPasswordUseCase) Execute(
 		return handleError(err)
 	}
 
-	appUser = toAppUser(domainUser)
+	appUser = toModifyAppUser(domainUser)
 	if err := u.userRepo.Save(ctx, appUser); err != nil {
 		return err
 	}

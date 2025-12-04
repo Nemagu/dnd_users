@@ -17,7 +17,7 @@ type ConfirmNewEmailUserRepository interface {
 }
 
 type PasswordComparer interface {
-	ComparePassword(
+	Compare(
 		password string,
 		hash string,
 	) (bool, error)
@@ -66,7 +66,7 @@ func (u *ConfirmNewEmailUseCase) Execute(
 		return err
 	}
 
-	compare, err := u.passwordComparer.ComparePassword(
+	compare, err := u.passwordComparer.Compare(
 		input.Password,
 		user.PasswordHash,
 	)

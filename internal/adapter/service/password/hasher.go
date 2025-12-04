@@ -32,7 +32,7 @@ func (s *BcryptPasswordHasher) Hash(password string) (string, error) {
 	return string(hashedPassword), nil
 }
 
-func (s *BcryptPasswordHasher) ComparePassword(password, passwordHash string) (bool, error) {
+func (s *BcryptPasswordHasher) Compare(password, passwordHash string) (bool, error) {
 	err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {

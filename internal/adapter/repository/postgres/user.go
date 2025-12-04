@@ -24,14 +24,20 @@ type PostgresUserRepository struct {
 	pool   *pgxpool.Pool
 }
 
-func NewPostgresUserRepository(logger *slog.Logger, pool *pgxpool.Pool) (*PostgresUserRepository, error) {
+func NewPostgresUserRepository(
+	logger *slog.Logger,
+	pool *pgxpool.Pool,
+) (*PostgresUserRepository, error) {
 	return &PostgresUserRepository{
 		logger: logger,
 		pool:   pool,
 	}, nil
 }
 
-func MustNewPostgresUserRepository(logger *slog.Logger, pool *pgxpool.Pool) *PostgresUserRepository {
+func MustNewPostgresUserRepository(
+	logger *slog.Logger,
+	pool *pgxpool.Pool,
+) *PostgresUserRepository {
 	return &PostgresUserRepository{
 		logger: logger,
 		pool:   pool,
@@ -418,7 +424,7 @@ func (r *PostgresUserRepository) update(
 		}
 		return fmt.Errorf("%w: %s", application.ErrInternal, err)
 	}
-	if currentVersion != user.Version {
+	if currentVersion >= user.Version {
 		return fmt.Errorf(
 			"%w: версия пользователя с id %s не совпадает",
 			application.ErrVersionConflict,
@@ -463,7 +469,7 @@ func (r *PostgresUserRepository) update(
 func buildUserFromRow(
 	row pgx.Row, msg string,
 ) (*appdto.User, error) {
-	var u = appdto.User{}
+	u := appdto.User{}
 	if err := row.Scan(
 		&u.UserID,
 		&u.Email,

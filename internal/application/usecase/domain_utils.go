@@ -22,16 +22,16 @@ func toModifyAppUser(user *duser.User) *appdto.User {
 	}
 }
 
-func toAppUser(user *duser.User) *appdto.User {
-	return &appdto.User{
-		UserID:       user.ID(),
-		Email:        user.Email().String(),
-		State:        user.State().String(),
-		Status:       user.Status().String(),
-		PasswordHash: user.PasswordHash(),
-		Version:      user.Version(),
-	}
-}
+// func toAppUser(user *duser.User) *appdto.User {
+// 	return &appdto.User{
+// 		UserID:       user.ID(),
+// 		Email:        user.Email().String(),
+// 		State:        user.State().String(),
+// 		Status:       user.Status().String(),
+// 		PasswordHash: user.PasswordHash(),
+// 		Version:      user.Version(),
+// 	}
+// }
 
 func restoreDomainUser(user *appdto.User) (*duser.User, error) {
 	e, err := toDomainEmail(user.Email)

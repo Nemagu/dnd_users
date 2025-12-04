@@ -98,8 +98,7 @@ func (u *RegisterUserUseCase) Execute(
 		return uuid.UUID{}, fmt.Errorf("%w: %s", application.ErrValidation, err)
 	}
 
-	dtoUser := toAppUser(domainUser)
-
+	dtoUser := toModifyAppUser(domainUser)
 	if err := u.userRepo.Save(ctx, dtoUser); err != nil {
 		return uuid.UUID{}, err
 	}

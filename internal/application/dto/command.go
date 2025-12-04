@@ -39,7 +39,6 @@ type UpdateUserCommand struct {
 }
 
 type ChangePasswordCommand struct {
-	InitiatorID uuid.UUID
 	UserID      uuid.UUID
 	OldPassword string
 	NewPassword string

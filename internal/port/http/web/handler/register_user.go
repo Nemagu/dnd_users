@@ -32,7 +32,7 @@ func (h *RegisterUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := h.BaseHandler.requestDecoder.Decode(r.Context(), r, &body); err != nil {
-		h.BaseHandler.errorHandle(r.Context(), w, err)
+		h.BaseHandler.handleError(r.Context(), w, err)
 		return
 	}
 	input := appdto.RegisterUserCommand{
@@ -41,7 +41,7 @@ func (h *RegisterUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 	id, err := h.useCase.Execute(r.Context(), &input)
 	if err != nil {
-		h.BaseHandler.errorHandle(r.Context(), w, err)
+		h.BaseHandler.handleError(r.Context(), w, err)
 		return
 	}
 	response := struct {

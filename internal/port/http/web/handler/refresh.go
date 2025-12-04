@@ -31,12 +31,12 @@ func (h *JWTRefreshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.BaseHandler.requestDecoder.Decode(r.Context(), r, &body); err != nil {
-		h.BaseHandler.errorHandle(r.Context(), w, err)
+		h.BaseHandler.handleError(r.Context(), w, err)
 		return
 	}
 	tokens, err := h.jwtProvider.RefreshToken(body.RefreshToken)
 	if err != nil {
-		h.BaseHandler.errorHandle(r.Context(), w, err)
+		h.BaseHandler.handleError(r.Context(), w, err)
 		return
 	}
 	h.BaseHandler.responseEncoder.Encode(r.Context(), w, http.StatusOK, tokens)

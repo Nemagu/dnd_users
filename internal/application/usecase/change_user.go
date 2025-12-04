@@ -83,7 +83,7 @@ func (u *ChangeUserUseCase) Execute(ctx context.Context, input *appdto.ChangeUse
 		return err
 	}
 
-	if err := u.userRepo.Save(ctx, toAppUser(domainUser)); err != nil {
+	if err := u.userRepo.Save(ctx, toModifyAppUser(domainUser)); err != nil {
 		return err
 	}
 
