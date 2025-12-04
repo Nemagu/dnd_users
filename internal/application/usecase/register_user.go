@@ -10,38 +10,24 @@ import (
 )
 
 type RegisterUserRepository interface {
-	NextID(
-		ctx context.Context,
-	) uuid.UUID
-	Save(
-		ctx context.Context,
-		user *appdto.User,
-	) error
+	NextID(ctx context.Context) uuid.UUID
+	Save(ctx context.Context, user *appdto.User) error
 }
 
 type EmailValidator interface {
-	Validate(
-		email string,
-	) error
+	Validate(email string) error
 }
 
 type PasswordValidator interface {
-	Validate(
-		password string,
-		email string,
-	) error
+	Validate(password string, email string) error
 }
 
 type PasswordHasher interface {
-	Hash(
-		password string,
-	) (string, error)
+	Hash(password string) (string, error)
 }
 
 type EmailDecrypter interface {
-	Decrypt(
-		token string,
-	) (string, error)
+	Decrypt(token string) (string, error)
 }
 
 type RegisterUserUseCase struct {
@@ -107,11 +93,7 @@ func (u *RegisterUserUseCase) Execute(
 		return uuid.UUID{}, err
 	}
 
-	domainUser, err := newDomainUser(
-		u.userRepo.NextID(ctx),
-		email,
-		passwordHash,
-	)
+	domainUser, err := newDomainUser(u.userRepo.NextID(ctx), email, passwordHash)
 	if err != nil {
 		return uuid.UUID{}, fmt.Errorf("%w: %s", application.ErrValidation, err)
 	}

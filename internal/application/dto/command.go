@@ -17,11 +17,6 @@ type ConfirmNewEmailCommand struct {
 	Password string
 }
 
-type ResetPasswordCommand struct {
-	UserID          uuid.UUID
-	CurrentPassword string
-}
-
 type AuthenticateCommand struct {
 	Email    string
 	Password string
@@ -41,4 +36,20 @@ type UpdateUserCommand struct {
 	UserID      uuid.UUID
 	Status      string
 	State       string
+}
+
+type ChangePasswordCommand struct {
+	InitiatorID uuid.UUID
+	UserID      uuid.UUID
+	OldPassword string
+	NewPassword string
+}
+
+type ConfirmResetPasswordCommand struct {
+	Email string
+}
+
+type ResetPasswordCommand struct {
+	Token       string
+	NewPassword string
 }

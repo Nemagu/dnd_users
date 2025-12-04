@@ -19,9 +19,7 @@ type UserUseCase struct {
 	policyService *duser.PolicyService
 }
 
-func MustNewUserUseCase(
-	userRepo UserRepository, policyService *duser.PolicyService,
-) *UserUseCase {
+func MustNewUserUseCase(userRepo UserRepository, policyService *duser.PolicyService) *UserUseCase {
 	if userRepo == nil {
 		panic("user use case does not get user repository")
 	}
@@ -34,9 +32,7 @@ func MustNewUserUseCase(
 	}
 }
 
-func (u *UserUseCase) Execute(
-	ctx context.Context, input *appdto.UserQuery,
-) (*appdto.User, error) {
+func (u *UserUseCase) Execute(ctx context.Context, input *appdto.UserQuery) (*appdto.User, error) {
 	appInitiator, err := u.userRepo.ByID(ctx, input.InitiatorID)
 	if err != nil {
 		return nil, err

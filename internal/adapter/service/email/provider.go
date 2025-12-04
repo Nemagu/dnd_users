@@ -59,25 +59,19 @@ func MustNewEmailProvider(
 	}
 }
 
-func (p *SMTPEmailProvider) SendConfirmEmail(
-	message appdto.Email,
-) {
+func (p *SMTPEmailProvider) SendConfirmEmail(message appdto.Email) {
 	ctx, cancel := p.createContext()
 	defer cancel()
 	p.sendEmail(ctx, message.To, buildConfirmMessage(message))
 }
 
-func (p *SMTPEmailProvider) SendChangeEmail(
-	message appdto.Email,
-) {
+func (p *SMTPEmailProvider) SendChangeEmail(message appdto.Email) {
 	ctx, cancel := p.createContext()
 	defer cancel()
 	p.sendEmail(ctx, message.To, buildChangeEmailMessage(message))
 }
 
-func (p *SMTPEmailProvider) SendResetPasswordEmail(
-	message appdto.Email,
-) {
+func (p *SMTPEmailProvider) SendResetPasswordEmail(message appdto.Email) {
 	ctx, cancel := p.createContext()
 	defer cancel()
 	p.sendEmail(ctx, message.To, buildResetPasswordMessage(message))
@@ -90,6 +84,7 @@ func (p *SMTPEmailProvider) createContext() (context.Context, context.CancelFunc
 func (p *SMTPEmailProvider) sendEmail(ctx context.Context, to string, message []byte) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
+
 	p.logger.InfoContext(ctx, "try to create connection")
 	conn, err := p.createConnection()
 	if err != nil {
@@ -100,6 +95,7 @@ func (p *SMTPEmailProvider) sendEmail(ctx context.Context, to string, message []
 			p.logger.ErrorContext(ctx, "connection closing failed", "error", err)
 		}
 	}()
+
 	p.logger.InfoContext(ctx, "try to create client")
 	client, err := smtp.NewClient(conn, p.host)
 	if err != nil {
@@ -110,19 +106,24 @@ func (p *SMTPEmailProvider) sendEmail(ctx context.Context, to string, message []
 			p.logger.ErrorContext(ctx, "quit client failed", "error", err)
 		}
 	}()
+
 	auth := smtp.PlainAuth("", p.username, p.password, p.host)
+
 	p.logger.InfoContext(ctx, "try to authenticate")
 	if err := client.Auth(auth); err != nil {
 		p.logger.ErrorContext(ctx, "authentication failed", "error", err)
 	}
+
 	p.logger.InfoContext(ctx, "try to set sender")
 	if err = client.Mail(p.from); err != nil {
 		p.logger.ErrorContext(ctx, "sender setting failed", "error", err)
 	}
+
 	p.logger.InfoContext(ctx, "try to set recipients")
 	if err = client.Rcpt(to); err != nil {
 		p.logger.ErrorContext(ctx, "recipients setting failed", "error", err)
 	}
+
 	w, err := client.Data()
 	if err != nil {
 		p.logger.ErrorContext(ctx, "writer creation failed", "error", err)
@@ -132,6 +133,7 @@ func (p *SMTPEmailProvider) sendEmail(ctx context.Context, to string, message []
 			p.logger.ErrorContext(ctx, "writer closing failed", "error", err)
 		}
 	}()
+
 	p.logger.InfoContext(ctx, "try to write email")
 	if _, err = w.Write(message); err != nil {
 		p.logger.ErrorContext(ctx, "message writing failed", "error", err)
@@ -142,9 +144,7 @@ func (p *SMTPEmailProvider) createConnection() (*tls.Conn, error) {
 	tlsConfig := &tls.Config{
 		ServerName: p.host,
 	}
-
 	addr := fmt.Sprintf("%s:%d", p.host, p.port)
-
 	return tls.Dial("tcp", addr, tlsConfig)
 }
 
@@ -177,25 +177,19 @@ func MustNewFileEmailProvider(
 	}
 }
 
-func (p *FileEmailProvider) SendConfirmEmail(
-	message appdto.Email,
-) {
+func (p *FileEmailProvider) SendConfirmEmail(message appdto.Email) {
 	ctx, cancel := p.createContext()
 	defer cancel()
 	p.saveFile(ctx, message.To, buildConfirmMessage(message))
 }
 
-func (p *FileEmailProvider) SendChangeEmail(
-	message appdto.Email,
-) {
+func (p *FileEmailProvider) SendChangeEmail(message appdto.Email) {
 	ctx, cancel := p.createContext()
 	defer cancel()
 	p.saveFile(ctx, message.To, buildChangeEmailMessage(message))
 }
 
-func (p *FileEmailProvider) SendResetPasswordEmail(
-	message appdto.Email,
-) {
+func (p *FileEmailProvider) SendResetPasswordEmail(message appdto.Email) {
 	ctx, cancel := p.createContext()
 	defer cancel()
 	p.saveFile(ctx, message.To, buildResetPasswordMessage(message))
@@ -208,10 +202,12 @@ func (p *FileEmailProvider) createContext() (context.Context, context.CancelFunc
 func (p *FileEmailProvider) saveFile(ctx context.Context, to string, message []byte) {
 	filename := fmt.Sprintf("%s/%s_%s", p.folderPath, to, time.Now().UTC().Format(time.RFC3339))
 	p.logger.InfoContext(ctx, "try to create file", "filename", filename)
+
 	file, err := os.Create(filename)
 	if err != nil {
 		p.logger.ErrorContext(ctx, "file creation failed", "error", err)
 	}
+
 	p.logger.InfoContext(ctx, "try to write into file")
 	_, err = file.Write(message)
 	if err != nil {
