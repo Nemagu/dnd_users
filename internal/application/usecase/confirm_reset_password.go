@@ -9,16 +9,11 @@ import (
 )
 
 type ConfirmResetPasswordUserRepository interface {
-	EmailExists(
-		ctx context.Context,
-		email string,
-	) (bool, error)
+	EmailExists(ctx context.Context, email string) (bool, error)
 }
 
 type ConfirmResetPasswordEmailProvider interface {
-	SendResetPasswordEmail(
-		message appdto.Email,
-	)
+	SendResetPasswordEmail(message appdto.Email)
 }
 
 type ConfirmResetPasswordUseCase struct {

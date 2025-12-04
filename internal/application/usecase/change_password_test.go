@@ -42,7 +42,7 @@ func (m *mockChangePasswordUserRepository) Save(ctx context.Context, user *appdt
 func TestChangePasswordUseCase_Execute_Success(t *testing.T) {
 	userID := uuid.New()
 	uc := MustNewChangePasswordUseCase(
-		&mockChangePasswordUserRepository{UserID: userID},
+		&mockChangePasswordUserRepository{UserID: userID, IsSaving: true},
 		&mockPasswordValidator{IsValidate: true},
 		&mockPasswordComparer{IsCompare: true},
 		&mockPasswordHasher{},

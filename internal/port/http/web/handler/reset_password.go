@@ -5,6 +5,7 @@ import (
 
 	appdto "github.com/Nemagu/dnd/internal/application/dto"
 	"github.com/Nemagu/dnd/internal/application/usecase"
+	webschema "github.com/Nemagu/dnd/internal/port/http/web/schema"
 )
 
 type ResetPasswordHandler struct {
@@ -25,11 +26,7 @@ func MustNewResetPasswordHandler(
 }
 
 func (h *ResetPasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Token       string `json:"token"`
-		NewPassword string `json:"new_password"`
-	}
-
+	var body *webschema.ResetPasswordRequest
 	if err := h.BaseHandler.requestDecoder.Decode(r.Context(), r, &body); err != nil {
 		h.BaseHandler.handleError(r.Context(), w, err)
 		return

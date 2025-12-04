@@ -5,6 +5,7 @@ import (
 
 	appdto "github.com/Nemagu/dnd/internal/application/dto"
 	"github.com/Nemagu/dnd/internal/application/usecase"
+	webschema "github.com/Nemagu/dnd/internal/port/http/web/schema"
 	"github.com/google/uuid"
 )
 
@@ -26,10 +27,7 @@ func MustNewRegisterUserHandler(
 }
 
 func (h *RegisterUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Token    string `json:"token"`
-		Password string `json:"password"`
-	}
+	var body *webschema.RegisterUserRequest
 
 	if err := h.BaseHandler.requestDecoder.Decode(r.Context(), r, &body); err != nil {
 		h.BaseHandler.handleError(r.Context(), w, err)

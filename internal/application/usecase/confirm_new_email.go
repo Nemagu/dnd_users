@@ -9,18 +9,15 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO need encrypting email and user id together
+
 type ConfirmNewEmailUserRepository interface {
-	ByID(
-		ctx context.Context,
-		id uuid.UUID,
-	) (*appdto.User, error)
+	ByID(ctx context.Context, id uuid.UUID) (*appdto.User, error)
+	EmailExists(ctx context.Context, email string) (bool, error)
 }
 
 type PasswordComparer interface {
-	Compare(
-		password string,
-		hash string,
-	) (bool, error)
+	Compare(password string, hash string) (bool, error)
 }
 
 type EmailCrypter interface {
@@ -28,9 +25,7 @@ type EmailCrypter interface {
 }
 
 type ConfirmNewEmailProvider interface {
-	SendChangeEmail(
-		message appdto.Email,
-	)
+	SendChangeEmail(message appdto.Email)
 }
 
 type ConfirmNewEmailUseCase struct {
@@ -61,15 +56,20 @@ func (u *ConfirmNewEmailUseCase) Execute(
 	ctx context.Context,
 	input *appdto.ConfirmNewEmailCommand,
 ) error {
+	exists, err := u.userRepo.EmailExists(ctx, input.Email)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("%w: такой email уже существует", application.ErrValidation)
+	}
+
 	user, err := u.userRepo.ByID(ctx, input.UserID)
 	if err != nil {
 		return err
 	}
 
-	compare, err := u.passwordComparer.Compare(
-		input.Password,
-		user.PasswordHash,
-	)
+	compare, err := u.passwordComparer.Compare(input.Password, user.PasswordHash)
 	if err != nil {
 		return err
 	}
@@ -86,9 +86,7 @@ func (u *ConfirmNewEmailUseCase) Execute(
 		return err
 	}
 
-	go u.emailProvider.SendChangeEmail(
-		appdto.Email{To: user.Email, Token: token},
-	)
+	go u.emailProvider.SendChangeEmail(appdto.Email{To: user.Email, Token: token})
 
 	return nil
 }

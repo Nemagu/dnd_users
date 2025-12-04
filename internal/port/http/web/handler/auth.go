@@ -5,6 +5,7 @@ import (
 
 	appdto "github.com/Nemagu/dnd/internal/application/dto"
 	"github.com/Nemagu/dnd/internal/application/usecase"
+	webschema "github.com/Nemagu/dnd/internal/port/http/web/schema"
 	"github.com/google/uuid"
 )
 
@@ -37,28 +38,28 @@ func MustNewJWTAuthHandler(
 }
 
 func (h *JWTAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-
+	var body *webschema.AuthRequest
 	if err := h.BaseHandler.requestDecoder.Decode(r.Context(), r, &body); err != nil {
 		h.BaseHandler.handleError(r.Context(), w, err)
 		return
 	}
+
 	input := appdto.AuthenticateCommand{
 		Email:    body.Email,
 		Password: body.Password,
 	}
+
 	userID, err := h.useCase.Execute(r.Context(), &input)
 	if err != nil {
 		h.BaseHandler.handleError(r.Context(), w, err)
 		return
 	}
+
 	tokens, err := h.jwtProvider.GenerateTokens(userID)
 	if err != nil {
 		h.BaseHandler.handleError(r.Context(), w, err)
 		return
 	}
+
 	h.BaseHandler.responseEncoder.Encode(r.Context(), w, http.StatusOK, tokens)
 }

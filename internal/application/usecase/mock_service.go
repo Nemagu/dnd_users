@@ -1,6 +1,9 @@
 package usecase
 
-import "github.com/Nemagu/dnd/internal/application"
+import (
+	"github.com/Nemagu/dnd/internal/application"
+	appdto "github.com/Nemagu/dnd/internal/application/dto"
+)
 
 type mockPasswordComparer struct {
 	IsCompare bool
@@ -25,4 +28,30 @@ type mockPasswordHasher struct{}
 
 func (p *mockPasswordHasher) Hash(password string) (string, error) {
 	return "this_is_password_hash", nil
+}
+
+type mockEmailProvider struct{}
+
+func (p *mockEmailProvider) SendConfirmEmail(message appdto.Email) {}
+
+func (p *mockEmailProvider) SendChangeEmail(message appdto.Email) {}
+
+func (p *mockEmailProvider) SendResetPasswordEmail(message appdto.Email) {}
+
+type mockEmailCrypter struct{}
+
+func (c *mockEmailCrypter) Encrypt(email string) (string, error) {
+	return "encrypted_email", nil
+}
+
+type mockEmailValidator struct {
+	IsValid bool
+}
+
+func (v *mockEmailValidator) Validate(email string) error {
+	if v.IsValid {
+		return nil
+	} else {
+		return application.ErrValidation
+	}
 }

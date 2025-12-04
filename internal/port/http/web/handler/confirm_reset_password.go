@@ -5,6 +5,7 @@ import (
 
 	appdto "github.com/Nemagu/dnd/internal/application/dto"
 	"github.com/Nemagu/dnd/internal/application/usecase"
+	webschema "github.com/Nemagu/dnd/internal/port/http/web/schema"
 )
 
 type ConfirmResetPasswordHandler struct {
@@ -25,10 +26,7 @@ func MustNewConfirmResetPasswordHandler(
 }
 
 func (h *ConfirmResetPasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Email string `json:"email"`
-	}
-
+	var body *webschema.ConfirmResetPasswordRequest
 	if err := h.BaseHandler.requestDecoder.Decode(r.Context(), r, &body); err != nil {
 		h.BaseHandler.handleError(r.Context(), w, err)
 		return

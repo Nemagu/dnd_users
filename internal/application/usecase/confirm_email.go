@@ -10,16 +10,11 @@ import (
 )
 
 type ConfirmEmailUserRepository interface {
-	EmailExists(
-		ctx context.Context,
-		email string,
-	) (bool, error)
+	EmailExists(ctx context.Context, email string) (bool, error)
 }
 
 type ConfirmEmailProvider interface {
-	SendConfirmEmail(
-		message appdto.Email,
-	)
+	SendConfirmEmail(message appdto.Email)
 }
 
 type ConfirmEmailUseCase struct {

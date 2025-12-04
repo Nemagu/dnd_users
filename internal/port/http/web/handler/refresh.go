@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net/http"
+
+	webschema "github.com/Nemagu/dnd/internal/port/http/web/schema"
 )
 
 type JWTRefreshProvider interface {
@@ -26,10 +28,7 @@ func MustNewJWTRefreshHandler(
 }
 
 func (h *JWTRefreshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		RefreshToken string `json:"refresh_token"`
-	}
-
+	var body *webschema.JWTRefreshRequest
 	if err := h.BaseHandler.requestDecoder.Decode(r.Context(), r, &body); err != nil {
 		h.BaseHandler.handleError(r.Context(), w, err)
 		return

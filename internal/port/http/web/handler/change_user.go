@@ -5,6 +5,7 @@ import (
 
 	appdto "github.com/Nemagu/dnd/internal/application/dto"
 	"github.com/Nemagu/dnd/internal/application/usecase"
+	webschema "github.com/Nemagu/dnd/internal/port/http/web/schema"
 )
 
 type ChangeUserHandler struct {
@@ -26,13 +27,7 @@ func MustNewChangeUserHandler(
 }
 
 func (h *ChangeUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Email    string `json:"email"`
-		State    string `json:"state"`
-		Status   string `json:"status"`
-		Password string `json:"password"`
-	}
-
+	var body *webschema.ChangeUserRequest
 	if err := h.BaseHandler.requestDecoder.Decode(r.Context(), r, body); err != nil {
 		h.BaseHandler.handleError(r.Context(), w, err)
 		return
