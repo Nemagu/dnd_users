@@ -10,12 +10,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type mockChangePasswordUserRepository struct {
+type mockNewPasswordUserRepository struct {
 	UserID   uuid.UUID
 	IsSaving bool
 }
 
-func (m *mockChangePasswordUserRepository) ByID(
+func (m *mockNewPasswordUserRepository) ByID(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*appdto.User, error) {
@@ -32,7 +32,7 @@ func (m *mockChangePasswordUserRepository) ByID(
 	}, nil
 }
 
-func (m *mockChangePasswordUserRepository) Save(ctx context.Context, user *appdto.User) error {
+func (m *mockNewPasswordUserRepository) Save(ctx context.Context, user *appdto.User) error {
 	if m.IsSaving {
 		return nil
 	}
@@ -41,8 +41,8 @@ func (m *mockChangePasswordUserRepository) Save(ctx context.Context, user *appdt
 
 func TestChangePasswordUseCase_Execute_Success(t *testing.T) {
 	userID := uuid.New()
-	uc := MustNewChangePasswordUseCase(
-		&mockChangePasswordUserRepository{UserID: userID, IsSaving: true},
+	uc := MustNewPasswordUseCase(
+		&mockNewPasswordUserRepository{UserID: userID, IsSaving: true},
 		&mockPasswordValidator{IsValidate: true},
 		&mockPasswordComparer{IsCompare: true},
 		&mockPasswordHasher{},
@@ -62,13 +62,13 @@ func TestChangePasswordUseCase_Execute_Fail(t *testing.T) {
 	baseTestName := "test_fail_change_password_"
 	cases := []struct {
 		TestName string
-		UC       *ChangePasswordUseCase
+		UC       *NewPasswordUseCase
 		Command  *appdto.ChangePasswordCommand
 	}{
 		{
 			TestName: baseTestName + "diff_user_id",
-			UC: MustNewChangePasswordUseCase(
-				&mockChangePasswordUserRepository{UserID: userID},
+			UC: MustNewPasswordUseCase(
+				&mockNewPasswordUserRepository{UserID: userID},
 				&mockPasswordValidator{IsValidate: true},
 				&mockPasswordComparer{IsCompare: true},
 				&mockPasswordHasher{},
@@ -81,8 +81,8 @@ func TestChangePasswordUseCase_Execute_Fail(t *testing.T) {
 		},
 		{
 			TestName: baseTestName + "pass_is_not_valid",
-			UC: MustNewChangePasswordUseCase(
-				&mockChangePasswordUserRepository{UserID: userID},
+			UC: MustNewPasswordUseCase(
+				&mockNewPasswordUserRepository{UserID: userID},
 				&mockPasswordValidator{IsValidate: false},
 				&mockPasswordComparer{IsCompare: true},
 				&mockPasswordHasher{},
@@ -95,8 +95,8 @@ func TestChangePasswordUseCase_Execute_Fail(t *testing.T) {
 		},
 		{
 			TestName: baseTestName + "pass_not_compare",
-			UC: MustNewChangePasswordUseCase(
-				&mockChangePasswordUserRepository{UserID: userID},
+			UC: MustNewPasswordUseCase(
+				&mockNewPasswordUserRepository{UserID: userID},
 				&mockPasswordValidator{IsValidate: true},
 				&mockPasswordComparer{IsCompare: false},
 				&mockPasswordHasher{},

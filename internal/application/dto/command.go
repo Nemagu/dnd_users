@@ -17,6 +17,11 @@ type ConfirmNewEmailCommand struct {
 	Password string
 }
 
+type NewEmailCommand struct {
+	Token    string
+	Password string
+}
+
 type AuthenticateCommand struct {
 	Email    string
 	Password string

@@ -3,6 +3,7 @@ package usecase
 import (
 	"github.com/Nemagu/dnd/internal/application"
 	appdto "github.com/Nemagu/dnd/internal/application/dto"
+	"github.com/google/uuid"
 )
 
 type mockPasswordComparer struct {
@@ -40,7 +41,11 @@ func (p *mockEmailProvider) SendResetPasswordEmail(message appdto.Email) {}
 
 type mockEmailCrypter struct{}
 
-func (c *mockEmailCrypter) Encrypt(email string) (string, error) {
+func (c *mockEmailCrypter) EncryptEmail(email string) (string, error) {
+	return "encrypted_email", nil
+}
+
+func (c *mockEmailCrypter) EncryptEmailUserID(email string, userID uuid.UUID) (string, error) {
 	return "encrypted_email", nil
 }
 

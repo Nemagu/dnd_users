@@ -53,7 +53,7 @@ func MustNewResetPasswordUseCase(
 func (u *ResetPasswordUseCase) Execute(
 	ctx context.Context, input *appdto.ResetPasswordCommand,
 ) error {
-	email, err := u.emailDecrypter.Decrypt(input.Token)
+	email, err := u.emailDecrypter.DecryptEmail(input.Token)
 	if err != nil {
 		return err
 	}

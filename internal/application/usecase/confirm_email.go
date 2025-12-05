@@ -17,6 +17,10 @@ type ConfirmEmailProvider interface {
 	SendConfirmEmail(message appdto.Email)
 }
 
+type EmailCrypter interface {
+	EncryptEmail(email string) (string, error)
+}
+
 type ConfirmEmailUseCase struct {
 	userRepo       ConfirmEmailUserRepository
 	emailCrypter   EmailCrypter
@@ -56,7 +60,7 @@ func (u *ConfirmEmailUseCase) Execute(
 	if exists {
 		return fmt.Errorf("%w: такая почта уже существует", application.ErrAlreadyExists)
 	}
-	encryptedEmail, err := u.emailCrypter.Encrypt(email.String())
+	encryptedEmail, err := u.emailCrypter.EncryptEmail(email.String())
 	if err != nil {
 		return err
 	}

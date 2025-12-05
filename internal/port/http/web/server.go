@@ -84,7 +84,13 @@ func (s *HTTPServer) createAPIRouter() *chi.Mux {
 	s.logger.Info("init use cases")
 
 	authUC := usecase.MustNewAuthenticateUseCase(userRepo, passwordHasher)
-	changePasswordUC := usecase.MustNewChangePasswordUseCase(
+	newEmailUC := usecase.MustNewEmailUseCase(
+		userRepo,
+		emailCrypter,
+		emailValidator,
+		passwordHasher,
+	)
+	newPasswordUC := usecase.MustNewPasswordUseCase(
 		userRepo,
 		passwordValidator,
 		passwordHasher,
@@ -165,10 +171,12 @@ func (s *HTTPServer) createAPIRouter() *chi.Mux {
 		confirmResetPasswordUC,
 	)
 	resetPasswordHandler := handler.MustNewResetPasswordHandler(*baseHandler, resetPasswordUC)
+	newEmailHandler := handler.MustNewEmailHandler(*baseHandler, newEmailUC)
 
 	r.Post("/jwt/create", authHandler.ServeHTTP)
 	r.Post("/jwt/refresh", refreshHandler.ServeHTTP)
 	r.Post("/email/confirm", confirmEmailHandler.ServeHTTP)
+	r.Post("/email/new", newEmailHandler.ServeHTTP)
 	r.Post("/register", registerUserHandler.ServeHTTP)
 	r.Post("/password/reset/confirm", confirmResetPasswordHandler.ServeHTTP)
 	r.Post("/password/reset", resetPasswordHandler.ServeHTTP)
@@ -176,14 +184,14 @@ func (s *HTTPServer) createAPIRouter() *chi.Mux {
 	s.logger.Info("init handlers with auth middleware")
 
 	confirmNewEmailHandler := handler.MustNewConfirmNewEmailHandler(*baseHandler, confirmNewEmailUC)
-	changePasswordHandler := handler.MustNewChangePasswordHandler(*baseHandler, changePasswordUC)
+	newPasswordHandler := handler.MustNewPasswordHandler(*baseHandler, newPasswordUC)
 	changeUserHandler := handler.MustNewChangeUserHandler(*baseHandler, changeUserUC)
 	userHandler := handler.MustNewGetUserHandler(*baseHandler, userUC, userPresenter)
 	usersHandler := handler.MustNewGetUsersHandler(*baseHandler, usersUC, userPresenter)
 	meHandler := handler.MustNewGetMeHandler(*baseHandler, userUC, userPresenter)
 
-	authR.Post("/email/new", confirmNewEmailHandler.ServeHTTP)
-	authR.Post("/password/change", changePasswordHandler.ServeHTTP)
+	authR.Post("/email/confirm/new", confirmNewEmailHandler.ServeHTTP)
+	authR.Post("/password/change", newPasswordHandler.ServeHTTP)
 	authR.Put("/users/{userID}", changeUserHandler.ServeHTTP)
 	authR.Get("/users/{userID}", userHandler.ServeHTTP)
 	authR.Get("/users", usersHandler.ServeHTTP)

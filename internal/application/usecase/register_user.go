@@ -27,7 +27,7 @@ type PasswordHasher interface {
 }
 
 type EmailDecrypter interface {
-	Decrypt(token string) (string, error)
+	DecryptEmail(token string) (string, error)
 }
 
 type RegisterUserUseCase struct {
@@ -74,7 +74,7 @@ func (u *RegisterUserUseCase) Execute(
 	ctx context.Context,
 	input *appdto.RegisterUserCommand,
 ) (uuid.UUID, error) {
-	email, err := u.emailDecrypter.Decrypt(input.Token)
+	email, err := u.emailDecrypter.DecryptEmail(input.Token)
 	if err != nil {
 		return uuid.UUID{}, err
 	}

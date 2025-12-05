@@ -9,24 +9,24 @@ import (
 	"github.com/google/uuid"
 )
 
-type ChangePasswordUserRepository interface {
+type NewPasswordUserRepository interface {
 	ByID(ctx context.Context, id uuid.UUID) (*appdto.User, error)
 	Save(ctx context.Context, user *appdto.User) error
 }
 
-type ChangePasswordUseCase struct {
-	userRepo          ChangePasswordUserRepository
+type NewPasswordUseCase struct {
+	userRepo          NewPasswordUserRepository
 	passwordValidator PasswordValidator
 	passwordComparer  PasswordComparer
 	passwordHasher    PasswordHasher
 }
 
-func MustNewChangePasswordUseCase(
-	userRepo ChangePasswordUserRepository,
+func MustNewPasswordUseCase(
+	userRepo NewPasswordUserRepository,
 	passwordValidator PasswordValidator,
 	passwordComparer PasswordComparer,
 	passwordHasher PasswordHasher,
-) *ChangePasswordUseCase {
+) *NewPasswordUseCase {
 	if userRepo == nil {
 		panic("change password use case does not get user repository")
 	}
@@ -36,7 +36,7 @@ func MustNewChangePasswordUseCase(
 	if passwordComparer == nil {
 		panic("change password use case does not get password comparer")
 	}
-	return &ChangePasswordUseCase{
+	return &NewPasswordUseCase{
 		userRepo:          userRepo,
 		passwordValidator: passwordValidator,
 		passwordComparer:  passwordComparer,
@@ -44,7 +44,7 @@ func MustNewChangePasswordUseCase(
 	}
 }
 
-func (u *ChangePasswordUseCase) Execute(
+func (u *NewPasswordUseCase) Execute(
 	ctx context.Context, input *appdto.ChangePasswordCommand,
 ) error {
 	appUser, err := u.userRepo.ByID(ctx, input.UserID)

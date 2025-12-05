@@ -48,10 +48,7 @@ func (r *PostgresUserRepository) NextID(ctx context.Context) uuid.UUID {
 	return uuid.New()
 }
 
-func (r *PostgresUserRepository) IDExists(
-	ctx context.Context,
-	id uuid.UUID,
-) (bool, error) {
+func (r *PostgresUserRepository) IDExists(ctx context.Context, id uuid.UUID) (bool, error) {
 	var exists bool
 	query := fmt.Sprintf(
 		"SELECT EXISTS(SELECT 1 FROM %s WHERE id = $1)",
@@ -66,10 +63,7 @@ func (r *PostgresUserRepository) IDExists(
 	return exists, nil
 }
 
-func (r *PostgresUserRepository) EmailExists(
-	ctx context.Context,
-	email string,
-) (bool, error) {
+func (r *PostgresUserRepository) EmailExists(ctx context.Context, email string) (bool, error) {
 	var exists bool
 	query := fmt.Sprintf(
 		"SELECT EXISTS(SELECT 1 FROM %s WHERE email = $1)",
@@ -137,10 +131,7 @@ func (r *PostgresUserRepository) All(
 	return result, nil
 }
 
-func (r *PostgresUserRepository) ByID(
-	ctx context.Context,
-	id uuid.UUID,
-) (*appdto.User, error) {
+func (r *PostgresUserRepository) ByID(ctx context.Context, id uuid.UUID) (*appdto.User, error) {
 	query := fmt.Sprintf(
 		`SELECT 
 			id,
@@ -163,10 +154,7 @@ func (r *PostgresUserRepository) ByID(
 	)
 }
 
-func (r *PostgresUserRepository) ByEmail(
-	ctx context.Context,
-	email string,
-) (*appdto.User, error) {
+func (r *PostgresUserRepository) ByEmail(ctx context.Context, email string) (*appdto.User, error) {
 	query := fmt.Sprintf(
 		`SELECT 
 		    id,
@@ -262,10 +250,7 @@ func (r *PostgresUserRepository) Filter(
 	return result, nil
 }
 
-func (r *PostgresUserRepository) Save(
-	ctx context.Context,
-	user *appdto.User,
-) error {
+func (r *PostgresUserRepository) Save(ctx context.Context, user *appdto.User) error {
 	r.logger.DebugContext(ctx, "check exists")
 	exists, err := r.IDExists(ctx, user.UserID)
 	if err != nil {
@@ -290,10 +275,7 @@ func (r *PostgresUserRepository) Save(
 	return nil
 }
 
-func (r *PostgresUserRepository) create(
-	ctx context.Context,
-	user *appdto.User,
-) error {
+func (r *PostgresUserRepository) create(ctx context.Context, user *appdto.User) error {
 	userStmt := fmt.Sprintf(
 		`INSERT INTO %s (
 			id,
@@ -365,10 +347,7 @@ func (r *PostgresUserRepository) create(
 	return nil
 }
 
-func (r *PostgresUserRepository) update(
-	ctx context.Context,
-	user *appdto.User,
-) error {
+func (r *PostgresUserRepository) update(ctx context.Context, user *appdto.User) error {
 	query := fmt.Sprintf(
 		`SELECT version
 		FROM %s
@@ -466,9 +445,7 @@ func (r *PostgresUserRepository) update(
 	return nil
 }
 
-func buildUserFromRow(
-	row pgx.Row, msg string,
-) (*appdto.User, error) {
+func buildUserFromRow(row pgx.Row, msg string) (*appdto.User, error) {
 	u := appdto.User{}
 	if err := row.Scan(
 		&u.UserID,

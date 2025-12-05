@@ -5,7 +5,12 @@ type AuthRequest struct {
 	Password string `json:"password"`
 }
 
-type ChangePasswordRequest struct {
+type NewEmailRequest struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
+type NewPasswordRequest struct {
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
 }

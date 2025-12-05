@@ -64,7 +64,7 @@ func (u *ConfirmResetPasswordUseCase) Execute(
 		return fmt.Errorf("%w: такого email не существует", application.ErrValidation)
 	}
 
-	token, err := u.emailCrypter.Encrypt(input.Email)
+	token, err := u.emailCrypter.EncryptEmail(input.Email)
 	if err != nil {
 		return err
 	}

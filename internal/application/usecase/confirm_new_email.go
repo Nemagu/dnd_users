@@ -20,8 +20,8 @@ type PasswordComparer interface {
 	Compare(password string, hash string) (bool, error)
 }
 
-type EmailCrypter interface {
-	Encrypt(email string) (string, error)
+type NewEmailCrypter interface {
+	EncryptEmailUserID(email string, userID uuid.UUID) (string, error)
 }
 
 type ConfirmNewEmailProvider interface {
@@ -31,7 +31,7 @@ type ConfirmNewEmailProvider interface {
 type ConfirmNewEmailUseCase struct {
 	userRepo         ConfirmNewEmailUserRepository
 	passwordComparer PasswordComparer
-	emailCrypter     EmailCrypter
+	emailCrypter     NewEmailCrypter
 	emailValidator   EmailValidator
 	emailProvider    ConfirmNewEmailProvider
 }
@@ -39,7 +39,7 @@ type ConfirmNewEmailUseCase struct {
 func MustNewConfirmNewEmailUseCase(
 	userRepo ConfirmNewEmailUserRepository,
 	passwordComparer PasswordComparer,
-	emailCrypter EmailCrypter,
+	emailCrypter NewEmailCrypter,
 	emailValidator EmailValidator,
 	emailProvider ConfirmNewEmailProvider,
 ) *ConfirmNewEmailUseCase {
@@ -81,7 +81,7 @@ func (u *ConfirmNewEmailUseCase) Execute(
 		return err
 	}
 
-	token, err := u.emailCrypter.Encrypt(user.Email)
+	token, err := u.emailCrypter.EncryptEmailUserID(user.Email, user.UserID)
 	if err != nil {
 		return err
 	}

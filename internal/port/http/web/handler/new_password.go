@@ -8,26 +8,26 @@ import (
 	webschema "github.com/Nemagu/dnd/internal/port/http/web/schema"
 )
 
-type ChangePasswordHandler struct {
+type NewPasswordHandler struct {
 	BaseHandler
-	useCase *usecase.ChangePasswordUseCase
+	useCase *usecase.NewPasswordUseCase
 }
 
-func MustNewChangePasswordHandler(
+func MustNewPasswordHandler(
 	base BaseHandler,
-	useCase *usecase.ChangePasswordUseCase,
-) *ChangePasswordHandler {
+	useCase *usecase.NewPasswordUseCase,
+) *NewPasswordHandler {
 	if useCase == nil {
 		panic("change password handler does not get use case")
 	}
-	return &ChangePasswordHandler{
+	return &NewPasswordHandler{
 		BaseHandler: base,
 		useCase:     useCase,
 	}
 }
 
-func (h *ChangePasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var body *webschema.ChangePasswordRequest
+func (h *NewPasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var body *webschema.NewPasswordRequest
 	if err := h.BaseHandler.requestDecoder.Decode(r.Context(), r, &body); err != nil {
 		h.BaseHandler.handleError(r.Context(), w, err)
 		return
