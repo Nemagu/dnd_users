@@ -9,11 +9,11 @@ import (
 )
 
 type mockConfirmEmailRepository struct {
-	EmailNotExists []string
+	NotExistsEmails []string
 }
 
 func (m *mockConfirmEmailRepository) EmailExists(ctx context.Context, email string) (bool, error) {
-	return !slices.Contains(m.EmailNotExists, email), nil
+	return !slices.Contains(m.NotExistsEmails, email), nil
 }
 
 type mockConfirmEmailCodeStore struct {
@@ -40,9 +40,9 @@ func TestConfirmEmailUseCase_Execute(t *testing.T) {
 			TestName: "test_confirm_email_use_case_ok",
 			Expected: nil,
 			UC: MustConfirmEmailUseCase(
-				&mockConfirmEmailRepository{EmailNotExists: []string{validEmail}},
+				&mockConfirmEmailRepository{NotExistsEmails: []string{validEmail}},
 				&mockConfirmEmailCodeStore{},
-				&mockEmailValidator{ValidEmail: []string{validEmail}},
+				&mockEmailValidator{},
 				&mockConfirmEmailProvider{},
 				&mockCodeGenerator{},
 			),
@@ -54,7 +54,7 @@ func TestConfirmEmailUseCase_Execute(t *testing.T) {
 			UC: MustConfirmEmailUseCase(
 				&mockConfirmEmailRepository{},
 				&mockConfirmEmailCodeStore{},
-				&mockEmailValidator{ValidEmail: []string{validEmail}},
+				&mockEmailValidator{},
 				&mockConfirmEmailProvider{},
 				&mockCodeGenerator{},
 			),
@@ -64,9 +64,9 @@ func TestConfirmEmailUseCase_Execute(t *testing.T) {
 			TestName: "test_confirm_email_use_case_setting_code_error",
 			Expected: ErrInternal,
 			UC: MustConfirmEmailUseCase(
-				&mockConfirmEmailRepository{EmailNotExists: []string{validEmail}},
+				&mockConfirmEmailRepository{NotExistsEmails: []string{validEmail}},
 				&mockConfirmEmailCodeStore{Err: fmt.Errorf("%w: internal error", ErrInternal)},
-				&mockEmailValidator{ValidEmail: []string{validEmail}},
+				&mockEmailValidator{},
 				&mockConfirmEmailProvider{},
 				&mockCodeGenerator{},
 			),
@@ -76,9 +76,9 @@ func TestConfirmEmailUseCase_Execute(t *testing.T) {
 			TestName: "test_confirm_email_use_case_invalid_email",
 			Expected: ErrInvalidData,
 			UC: MustConfirmEmailUseCase(
-				&mockConfirmEmailRepository{EmailNotExists: []string{validEmail}},
+				&mockConfirmEmailRepository{NotExistsEmails: []string{validEmail}},
 				&mockConfirmEmailCodeStore{},
-				&mockEmailValidator{},
+				&mockEmailValidator{NotValidEmails: []string{validEmail}},
 				&mockConfirmEmailProvider{},
 				&mockCodeGenerator{},
 			),

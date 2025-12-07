@@ -1,6 +1,8 @@
 package app
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type User struct {
 	ID           uuid.UUID

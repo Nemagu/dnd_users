@@ -48,10 +48,10 @@ func RestoreUser(
 	if email == "" {
 		return nil, fmt.Errorf("%w: email пользователя не может быть пустым", ErrInvalidData)
 	}
-	if state == nilState {
+	if state == NilState {
 		return nil, fmt.Errorf("%w: состояние пользователя не может быть пустым", ErrInvalidData)
 	}
-	if status == nilStatus {
+	if status == NilStatus {
 		return nil, fmt.Errorf("%w: статус пользователя не может быть пустым", ErrInvalidData)
 	}
 	if passwordHash == "" {
@@ -113,7 +113,7 @@ func (u *User) NewEmail(email string) error {
 }
 
 func (u *User) NewState(state State) error {
-	if state == nilState {
+	if state == NilState {
 		return fmt.Errorf("%w: состояние пользователя не может быть пустым", ErrInvalidData)
 	}
 	if u.state == state {
@@ -127,7 +127,7 @@ func (u *User) NewStatus(status Status) error {
 	if err := u.checkState(); err != nil {
 		return err
 	}
-	if status == nilStatus {
+	if status == NilStatus {
 		return fmt.Errorf("%w: статус пользователя не может быть пустым", ErrInvalidData)
 	}
 	if u.status == status {

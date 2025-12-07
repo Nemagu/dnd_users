@@ -7,7 +7,7 @@ const (
 	USER  = "user"
 )
 
-var nilStatus = Status("")
+var NilStatus = Status("")
 
 type Status string
 
@@ -28,6 +28,10 @@ func NewStatus(status string) (Status, error) {
 
 func newUserStatus() Status {
 	return Status(USER)
+}
+
+func (s Status) String() string {
+	return string(s)
 }
 
 func (s Status) IsAdmin() bool {

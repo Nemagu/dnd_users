@@ -8,7 +8,7 @@ const (
 	DELETED = "deleted"
 )
 
-var nilState = State("")
+var NilState = State("")
 
 type State string
 
@@ -31,6 +31,10 @@ func NewState(state string) (State, error) {
 
 func newActiveState() State {
 	return State(ACTIVE)
+}
+
+func (s State) String() string {
+	return string(s)
 }
 
 func (s State) IsActive() bool {
