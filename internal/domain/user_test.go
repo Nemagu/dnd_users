@@ -156,34 +156,47 @@ func TestUser_RestoreUser(t *testing.T) {
 	}
 }
 
-func activeUser() *User {
-	return &User{
-		id:           uuid.New(),
-		email:        "test@test.ru",
-		state:        newActiveState(),
-		status:       newUserStatus(),
-		passwordHash: "test",
-		version:      1,
-	}
-}
-
 func TestUser_NewEmail(t *testing.T) {
 	cases := []struct {
 		TestName string
 		Expected error
+		User     *User
 		NewEmail string
 	}{
-		{TestName: "test_user_new_email_ok", Expected: nil, NewEmail: "new.email@test.ru"},
-		{TestName: "test_user_new_email_it_is_empty", Expected: ErrInvalidData, NewEmail: ""},
+		{
+			TestName: "test_user_new_email_ok",
+			Expected: nil,
+			User:     activeUser(),
+			NewEmail: "new.email@test.ru",
+		},
+		{
+			TestName: "test_user_new_email_it_is_empty",
+			Expected: ErrInvalidData,
+			User:     activeUser(),
+			NewEmail: "",
+		},
 		{
 			TestName: "test_user_new_email_it_is_same",
 			Expected: ErrIdempotent,
+			User:     activeUser(),
 			NewEmail: activeUser().Email(),
+		},
+		{
+			TestName: "test_user_new_email_he_is_frozen",
+			Expected: ErrUserNotActive,
+			User:     frozenUser(),
+			NewEmail: "new.email@test.ru",
+		},
+		{
+			TestName: "test_user_new_email_he_is_deleted",
+			Expected: ErrUserNotActive,
+			User:     deletedUser(),
+			NewEmail: "new.email@test.ru",
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.TestName, func(t *testing.T) {
-			err := activeUser().NewEmail(c.NewEmail)
+			err := c.User.NewEmail(c.NewEmail)
 			if c.Expected == nil {
 				if err != nil {
 					t.Errorf("expected %T, but got nil", c.Expected)
@@ -200,19 +213,38 @@ func TestUser_NewState(t *testing.T) {
 	cases := []struct {
 		TestName string
 		Expected error
+		User     *User
 		NewState State
 	}{
-		{TestName: "test_user_new_state_ok", Expected: nil, NewState: FROZEN},
-		{TestName: "test_user_new_state_it_is_empty", Expected: ErrInvalidData, NewState: nilState},
+		{TestName: "test_user_new_state_ok", Expected: nil, User: activeUser(), NewState: FROZEN},
+		{
+			TestName: "test_user_new_state_it_is_empty",
+			Expected: ErrInvalidData,
+			User:     activeUser(),
+			NewState: nilState,
+		},
 		{
 			TestName: "test_user_new_state_it_is_same",
 			Expected: ErrIdempotent,
+			User:     activeUser(),
 			NewState: activeUser().State(),
+		},
+		{
+			TestName: "test_user_new_state_he_is_frozen",
+			Expected: nil,
+			User:     frozenUser(),
+			NewState: State(ACTIVE),
+		},
+		{
+			TestName: "test_user_new_state_he_is_deleted",
+			Expected: nil,
+			User:     deletedUser(),
+			NewState: State(ACTIVE),
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.TestName, func(t *testing.T) {
-			err := activeUser().NewState(c.NewState)
+			err := c.User.NewState(c.NewState)
 			if c.Expected == nil {
 				if err != nil {
 					t.Errorf("expected %T, but got nil", c.Expected)
@@ -229,23 +261,38 @@ func TestUser_NewStatus(t *testing.T) {
 	cases := []struct {
 		TestName  string
 		Expected  error
+		User      *User
 		NewStatus Status
 	}{
-		{TestName: "test_user_new_status_ok", Expected: nil, NewStatus: ADMIN},
+		{TestName: "test_user_new_status_ok", Expected: nil, User: activeUser(), NewStatus: ADMIN},
 		{
 			TestName:  "test_user_new_status_it_is_empty",
 			Expected:  ErrInvalidData,
+			User:      activeUser(),
 			NewStatus: nilStatus,
 		},
 		{
 			TestName:  "test_user_new_status_it_is_same",
 			Expected:  ErrIdempotent,
+			User:      activeUser(),
 			NewStatus: activeUser().Status(),
+		},
+		{
+			TestName:  "test_user_new_status_he_is_frozen",
+			Expected:  ErrUserNotActive,
+			User:      frozenUser(),
+			NewStatus: Status(ADMIN),
+		},
+		{
+			TestName:  "test_user_new_status_he_is_deleted",
+			Expected:  ErrUserNotActive,
+			User:      deletedUser(),
+			NewStatus: Status(ADMIN),
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.TestName, func(t *testing.T) {
-			err := activeUser().NewStatus(c.NewStatus)
+			err := c.User.NewStatus(c.NewStatus)
 			if c.Expected == nil {
 				if err != nil {
 					t.Errorf("expected %T, but got nil", c.Expected)
@@ -262,18 +309,37 @@ func TestUser_NewPasswordHash(t *testing.T) {
 	cases := []struct {
 		TestName string
 		Expected error
+		User     *User
 		NewHash  string
 	}{
-		{TestName: "test_user_new_password_hash_ok", Expected: nil, NewHash: "newPasswordHash"},
+		{
+			TestName: "test_user_new_password_hash_ok",
+			Expected: nil,
+			User:     activeUser(),
+			NewHash:  "newPasswordHash",
+		},
 		{
 			TestName: "test_user_new_password_hash_it_is_empty",
 			Expected: ErrInvalidData,
+			User:     activeUser(),
 			NewHash:  "",
+		},
+		{
+			TestName: "test_user_new_password_hash_he_is_frozen",
+			Expected: ErrUserNotActive,
+			User:     frozenUser(),
+			NewHash:  "newPasswordHash",
+		},
+		{
+			TestName: "test_user_new_password_hash_he_is_deleted",
+			Expected: ErrUserNotActive,
+			User:     deletedUser(),
+			NewHash:  "newPasswordHash",
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.TestName, func(t *testing.T) {
-			err := activeUser().NewPasswordHash(c.NewHash)
+			err := c.User.NewPasswordHash(c.NewHash)
 			if c.Expected == nil {
 				if err != nil {
 					t.Errorf("expected %T, but got nil", c.Expected)

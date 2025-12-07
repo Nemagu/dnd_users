@@ -113,9 +113,6 @@ func (u *User) NewEmail(email string) error {
 }
 
 func (u *User) NewState(state State) error {
-	if err := u.checkState(); err != nil {
-		return err
-	}
 	if state == nilState {
 		return fmt.Errorf("%w: состояние пользователя не может быть пустым", ErrInvalidData)
 	}
