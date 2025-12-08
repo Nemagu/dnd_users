@@ -50,10 +50,10 @@ func (m *mockPasswordHasher) Hash(password string) (string, error) {
 }
 
 type mockPasswordComparer struct {
-	ValidPassword []string
-	Err           error
+	InvalidPassword []string
+	Err             error
 }
 
 func (m *mockPasswordComparer) Compare(password, hash string) (bool, error) {
-	return slices.Contains(m.ValidPassword, password), m.Err
+	return !slices.Contains(m.InvalidPassword, password), m.Err
 }
