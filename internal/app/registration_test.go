@@ -173,7 +173,7 @@ func TestRegistrationUseCase_Execute(t *testing.T) {
 			UC: MustRegistrationUseCase(
 				&mockRegistrationRepository{},
 				&mockRegistrationCodeStore{Value: validCode},
-				&mockEmailValidator{NotValidEmails: []string{validEmail}},
+				&mockEmailValidator{InvalidEmails: []string{validEmail}},
 				&mockPasswordValidator{},
 				&mockPasswordHasher{},
 			),
@@ -190,7 +190,7 @@ func TestRegistrationUseCase_Execute(t *testing.T) {
 				&mockRegistrationRepository{},
 				&mockRegistrationCodeStore{Value: validCode},
 				&mockEmailValidator{},
-				&mockPasswordValidator{NotValidPassword: []string{validPassword}},
+				&mockPasswordValidator{InvalidPasswords: []string{validPassword}},
 				&mockPasswordHasher{},
 			),
 			Command: &RegistrationCommand{

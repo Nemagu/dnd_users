@@ -78,7 +78,7 @@ func TestConfirmEmailUseCase_Execute(t *testing.T) {
 			UC: MustConfirmEmailUseCase(
 				&mockConfirmEmailRepository{NotExistsEmails: []string{validEmail}},
 				&mockConfirmEmailCodeStore{},
-				&mockEmailValidator{NotValidEmails: []string{validEmail}},
+				&mockEmailValidator{InvalidEmails: []string{validEmail}},
 				&mockConfirmEmailProvider{},
 				&mockCodeGenerator{},
 			),

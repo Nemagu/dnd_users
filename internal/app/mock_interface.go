@@ -6,11 +6,11 @@ import (
 )
 
 type mockEmailValidator struct {
-	NotValidEmails []string
+	InvalidEmails []string
 }
 
 func (m *mockEmailValidator) Validate(email string) error {
-	if !slices.Contains(m.NotValidEmails, email) {
+	if !slices.Contains(m.InvalidEmails, email) {
 		return nil
 	} else {
 		return fmt.Errorf("%w: invalid email %s", ErrInvalidData, email)
@@ -30,11 +30,11 @@ func (m *mockCodeGenerator) Generate() string {
 }
 
 type mockPasswordValidator struct {
-	NotValidPassword []string
+	InvalidPasswords []string
 }
 
 func (m *mockPasswordValidator) Validate(password, email string) error {
-	if slices.Contains(m.NotValidPassword, password) {
+	if slices.Contains(m.InvalidPasswords, password) {
 		return fmt.Errorf("%w: password is invalid", ErrInvalidData)
 	} else {
 		return nil
