@@ -20,7 +20,7 @@ type mockConfirmEmailCodeStore struct {
 	Err error
 }
 
-func (m *mockConfirmEmailCodeStore) SetCEC(ctx context.Context, key, value string) error {
+func (m *mockConfirmEmailCodeStore) SetConfirmEmail(ctx context.Context, key, value string) error {
 	return m.Err
 }
 

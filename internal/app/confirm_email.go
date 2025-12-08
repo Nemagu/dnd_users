@@ -22,7 +22,7 @@ type confirmEmailRepository interface {
 }
 
 type confirmEmailCodeStore interface {
-	SetCEC(ctx context.Context, key, value string) error
+	SetConfirmEmail(ctx context.Context, key, value string) error
 }
 
 type confirmEmailProvider interface {
@@ -74,7 +74,7 @@ func (u *ConfirmEmailUseCase) Execute(ctx context.Context, command *ConfirmEmail
 	}
 
 	code := u.codeGenerator.Generate()
-	if err = u.store.SetCEC(ctx, command.Email, code); err != nil {
+	if err = u.store.SetConfirmEmail(ctx, command.Email, code); err != nil {
 		return err
 	}
 

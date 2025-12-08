@@ -31,22 +31,27 @@ func (m *mockNewEmailRepository) Save(ctx context.Context, user *User) error {
 }
 
 type mockNewEmailCodeStore struct {
-	Err          error
+	ErrGet       error
+	ErrDel       error
 	NewEmailCode string
 	NewEmailKey  string
 	OldEmailCode string
 	OldEmailKey  string
 }
 
-func (m *mockNewEmailCodeStore) GetNEC(ctx context.Context, key string) (string, error) {
+func (m *mockNewEmailCodeStore) GetNewEmail(ctx context.Context, key string) (string, error) {
 	switch key {
 	case m.NewEmailKey:
-		return m.NewEmailCode, m.Err
+		return m.NewEmailCode, m.ErrGet
 	case m.OldEmailKey:
-		return m.OldEmailCode, m.Err
+		return m.OldEmailCode, m.ErrGet
 	default:
-		return "", m.Err
+		return "", m.ErrGet
 	}
+}
+
+func (m *mockNewEmailCodeStore) DelNewEmail(ctx context.Context, key string) error {
+	return m.ErrDel
 }
 
 func TestNewEmailUseCase_Execute(t *testing.T) {
@@ -60,9 +65,9 @@ func TestNewEmailUseCase_Execute(t *testing.T) {
 	}
 	newEmail := "new.test@mail.com"
 	newEmailCode := "new"
-	newEmailKey := newEmail
+	newEmailKey := user.ID.String() + newEmail
 	oldEmailCode := "old"
-	oldEmailKey := user.Email
+	oldEmailKey := user.ID.String() + user.Email
 	password := "password"
 	cases := []struct {
 		TestName string
@@ -195,7 +200,7 @@ func TestNewEmailUseCase_Execute(t *testing.T) {
 					NewEmailKey:  newEmailKey,
 					OldEmailCode: oldEmailCode,
 					OldEmailKey:  oldEmailKey,
-					Err:          ErrInternal,
+					ErrGet:       ErrInternal,
 				},
 				&mockEmailValidator{},
 				&mockPasswordComparer{},
@@ -340,6 +345,30 @@ func TestNewEmailUseCase_Execute(t *testing.T) {
 			),
 			Command: &NewEmailCommand{
 				InitiatorID:  uuid.New(),
+				UserID:       user.ID,
+				NewEmail:     newEmail,
+				NewEmailCode: newEmailCode,
+				OldEmailCode: oldEmailCode,
+				Password:     password,
+			},
+		},
+		{
+			TestName: "test_new_email_use_case_del_code_error",
+			Expected: ErrInternal,
+			UC: MustNewEmailUseCase(
+				&mockNewEmailRepository{User: user},
+				&mockNewEmailCodeStore{
+					ErrDel:       ErrInternal,
+					NewEmailCode: newEmailCode,
+					NewEmailKey:  newEmailKey,
+					OldEmailCode: oldEmailCode,
+					OldEmailKey:  oldEmailKey,
+				},
+				&mockEmailValidator{},
+				&mockPasswordComparer{},
+			),
+			Command: &NewEmailCommand{
+				InitiatorID:  user.ID,
 				UserID:       user.ID,
 				NewEmail:     newEmail,
 				NewEmailCode: newEmailCode,

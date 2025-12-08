@@ -34,11 +34,11 @@ type mockRegistrationCodeStore struct {
 	ErrDeleting error
 }
 
-func (m *mockRegistrationCodeStore) GetCEC(ctx context.Context, key string) (string, error) {
+func (m *mockRegistrationCodeStore) GetConfirmEmail(ctx context.Context, key string) (string, error) {
 	return m.Value, m.ErrGetting
 }
 
-func (m *mockRegistrationCodeStore) DelCEC(ctx context.Context, key string) error {
+func (m *mockRegistrationCodeStore) DelConfirmEmail(ctx context.Context, key string) error {
 	return m.ErrDeleting
 }
 

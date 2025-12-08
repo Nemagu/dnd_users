@@ -13,7 +13,7 @@ type confirmNewEmailRepository interface {
 }
 
 type confirmNewEmailCodeStore interface {
-	SetCNEC(ctx context.Context, key, value string) error
+	SetNewEmail(ctx context.Context, key, value string) error
 }
 
 type confirmNewEmailProvider interface {
@@ -93,10 +93,10 @@ func (u *ConfirmNewEmailUseCase) Execute(
 	oldEmailCode := u.codeGenerator.Generate()
 	newEmailCode := u.codeGenerator.Generate()
 
-	if err = u.store.SetCNEC(ctx, user.Email, oldEmailCode); err != nil {
+	if err = u.store.SetNewEmail(ctx, user.ID.String()+user.Email, oldEmailCode); err != nil {
 		return err
 	}
-	if err = u.store.SetCNEC(ctx, command.NewEmail, newEmailCode); err != nil {
+	if err = u.store.SetNewEmail(ctx, user.ID.String()+command.NewEmail, newEmailCode); err != nil {
 		return err
 	}
 

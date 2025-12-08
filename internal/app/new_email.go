@@ -14,7 +14,8 @@ type newEmailRepository interface {
 }
 
 type newEmailCodeStore interface {
-	GetNEC(ctx context.Context, key string) (string, error)
+	GetNewEmail(ctx context.Context, key string) (string, error)
+	DelNewEmail(ctx context.Context, key string) error
 }
 
 type NewEmailCommand struct {
@@ -89,11 +90,11 @@ func (u *NewEmailUseCase) Execute(ctx context.Context, command *NewEmailCommand)
 		return fmt.Errorf("%w: неверный пароль", ErrInvalidData)
 	}
 
-	oldEmailCode, err := u.store.GetNEC(ctx, appUser.Email)
+	oldEmailCode, err := u.store.GetNewEmail(ctx, appUser.ID.String()+appUser.Email)
 	if err != nil {
 		return err
 	}
-	newEmailCode, err := u.store.GetNEC(ctx, command.NewEmail)
+	newEmailCode, err := u.store.GetNewEmail(ctx, appUser.ID.String()+command.NewEmail)
 	if err != nil {
 		return err
 	}
@@ -112,6 +113,10 @@ func (u *NewEmailUseCase) Execute(ctx context.Context, command *NewEmailCommand)
 
 	if err = domainUser.NewEmail(command.NewEmail); err != nil {
 		return handleDomainError(err)
+	}
+
+	if err = u.store.DelNewEmail(ctx, appUser.ID.String()+appUser.Email); err != nil {
+		return err
 	}
 
 	newAppUser, err := modifiedUser(domainUser)

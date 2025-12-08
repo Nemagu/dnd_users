@@ -32,7 +32,7 @@ type mockConfirmNewEmailCodeStore struct {
 	Err error
 }
 
-func (m *mockConfirmNewEmailCodeStore) SetCNEC(ctx context.Context, key, value string) error {
+func (m *mockConfirmNewEmailCodeStore) SetNewEmail(ctx context.Context, key, value string) error {
 	return m.Err
 }
 

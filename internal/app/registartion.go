@@ -15,8 +15,8 @@ type registrationRepository interface {
 }
 
 type registrationCodeStore interface {
-	GetCEC(ctx context.Context, key string) (string, error)
-	DelCEC(ctx context.Context, key string) error
+	GetConfirmEmail(ctx context.Context, key string) (string, error)
+	DelConfirmEmail(ctx context.Context, key string) error
 }
 
 type RegistrationCommand struct {
@@ -68,7 +68,7 @@ func (u *RegistrationUseCase) Execute(
 	ctx context.Context,
 	command *RegistrationCommand,
 ) (uuid.UUID, error) {
-	code, err := u.store.GetCEC(ctx, command.Code)
+	code, err := u.store.GetConfirmEmail(ctx, command.Code)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -112,16 +112,16 @@ func (u *RegistrationUseCase) Execute(
 		return uuid.Nil, handleDomainError(err)
 	}
 
+	if err = u.store.DelConfirmEmail(ctx, command.Code); err != nil {
+		return uuid.Nil, err
+	}
+
 	appUser, err := modifiedUser(domainUser)
 	if err != nil {
 		return uuid.Nil, err
 	}
 
 	if err = u.repo.Save(ctx, appUser); err != nil {
-		return uuid.Nil, err
-	}
-
-	if err = u.store.DelCEC(ctx, command.Code); err != nil {
 		return uuid.Nil, err
 	}
 
